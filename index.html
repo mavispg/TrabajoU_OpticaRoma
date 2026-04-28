@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Óptica Roma - Sistema de Gestión</title>
+    <!-- BoxIcons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="img/favicon.png">
+</head>
+<body>
+    
+    <!-- Login Container (HU10) -->
+    <div class="login-container" id="loginContainer">
+        <div class="login-bg-overlay"></div>
+        <div class="login-box">
+            <div class="login-header">
+                <div class="brand-logo">
+                    <i class='bx bx-glasses brand-icon'></i>
+                    <div class="brand-text-row">
+                        <div class="brand-block opticas">OPTICAS</div>
+                        <div class="brand-block roma">ROMA</div>
+                    </div>
+                </div>
+                <h2>OPTICA <span>ROMA</span></h2>
+                <p>Bienvenido al Sistema</p>
+            </div>
+            <form id="loginForm">
+                <div class="input-group">
+                    <i class='bx bx-user'></i>
+                    <input type="text" id="username" placeholder="Usuario" required>
+                </div>
+                <div class="input-group">
+                    <i class='bx bx-lock-alt'></i>
+                    <input type="password" id="password" placeholder="Contraseña" required>
+                </div>
+                <button type="submit" class="login-btn">INGRESAR</button>
+                <div id="loginError" class="error-msg"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="mainApp" style="display: none;">
+        <div class="menu-overlay"></div>
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo-details">
+                <div class="brand-logo" style="flex-direction: row; gap: 12px;">
+                    <i class='bx bx-glasses brand-icon' style="font-size: 32px; margin: 0;"></i>
+                    <div class="brand-text-row" style="align-items: flex-start; gap: 3px;">
+                        <div class="brand-block opticas" style="font-size: 14px; padding: 2px 8px;">OPTICAS</div>
+                        <div class="brand-block roma" style="font-size: 14px; padding: 2px 8px; margin-left: 20px;">ROMA</div>
+                    </div>
+                </div>
+                <i class='bx bx-x' id="mobileCloseBtn"></i>
+            </div>
+            <ul class="nav-list">
+                <li>
+                    <a href="#" class="nav-link active" data-target="home">
+                        <i class='bx bx-home-alt'></i>
+                        <span class="links_name">INICIO</span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a href="#" class="nav-link" data-target="monturas">
+                        <i class='bx bx-glasses-alt'></i>
+                        <span class="links_name">MONTURAS</span>
+                    </a>
+                </li>
+    
+                <li>
+                    <a href="#" class="nav-link" data-target="clients">
+                        <i class='bx bx-id-card'></i>
+                        <span class="links_name">VENTAS</span>
+                    </a>
+                </li>
+                
+                <li class="logout-mode">
+                    <a href="#" class="nav-link" id="logoutBtn">
+                        <i class='bx bx-log-out'></i>
+                        <span class="links_name">SALIR</span>
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <section class="home-section">
+            <div class="top-nav">
+                <div class="sidebar-button">
+                    <i class='bx bx-menu sidebarBtn'></i>
+                </div>
+                <div class="profile-details-top">
+                    <i class='bx bxs-user-circle'></i>
+                    <span class="admin_name">Administrador</span>
+                </div>
+            </div>
+
+            <!-- DASHBOARD BÁSICO -->
+            <div id="home" class="content-section active">
+                <h1 class="page-title">Bienvenido</h1>
+                <h2 class="page-subtitle">Sistema en Desarrollo</h2>
+                <p style="margin-top: 20px; color: #666;">Selecciona una opción del menú lateral para comenzar.</p>
+            </div>
+
+            <!-- MÓDULO DE MONTURAS (HU05) -->
+            <div id="monturas" class="content-section">
+                <h1 class="page-title">Catálogo</h1>
+                <h2 class="page-subtitle">MONTURAS</h2>
+                <div class="controls-bar">
+                    <div class="search-input-wrapper">
+                        <i class='bx bx-search'></i>
+                        <input type="text" id="searchMonturasInput" placeholder="Buscar montura...">
+                    </div>
+                    <div class="actions-group">
+                        <button class="btn-green" id="btnAddMontura"><i class='bx bx-plus'></i> Nueva Montura</button>
+                    </div>
+                </div>
+                <div class="white-box">
+                    <table class="custom-table" id="monturasTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 15%;">Cód. Interno</th>
+                                <th>Nombre Completo de la Montura</th>
+                                <th style="width: 15%;">Stock(Disp)</th>
+                                <th style="width: 15%;">P. Venta</th>
+                                <th style="width: 15%; text-align: right;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Se llena por MVC -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MÓDULO DE VENTAS (HU02) -->
+            <div id="clients" class="content-section">
+                <h1 class="page-title">Gestión</h1>
+                <h2 class="page-subtitle">ÓRDENES DE VENTA</h2>
+                <div class="controls-bar">
+                    <div class="search-input-wrapper">
+                        <i class='bx bx-search'></i>
+                        <input type="text" id="searchClientsInput" placeholder="Buscar venta por cliente o código...">
+                    </div>
+                    <div class="actions-group">
+                        <button class="btn-green" id="btnAddClient"><i class='bx bx-plus'></i> Nueva Venta</button>
+                    </div>
+                </div>
+                <div class="white-box">
+                    <table class="custom-table" id="clientsTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 12%;">Cod Venta</th>
+                                <th style="width: 15%;">Cliente</th>
+                                <th style="width: 25%;">Datos Compra</th>
+                                <th style="width: 12%;">Fecha</th>
+                                <th style="width: 12%;">Total</th>
+                                <th style="width: 12%;">Estado</th>
+                                <th style="width: 12%; text-align: right;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Se llena por MVC -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- MODAL AGREGAR MONTURA -->
+    <div id="addMonturaModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn montura-close">&times;</span>
+            <h2>Agregar Nueva Montura</h2>
+            <form id="addMonturaForm">
+                <div class="form-row">
+                    <div class="form-group" style="width: 30%;">
+                        <label>Cód. Interno:</label>
+                        <input type="text" id="m_code" required>
+                    </div>
+                    <div class="form-group" style="width: 70%;">
+                        <label>Nombre de la Montura:</label>
+                        <input type="text" id="m_name" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="width: 50%;">
+                        <label>Stock Total:</label>
+                        <input type="number" id="m_stock" required min="0">
+                    </div>
+                    <div class="form-group" style="width: 50%;">
+                        <label>Precio de Venta (S/.):</label>
+                        <input type="number" step="0.01" id="m_sell_price" required min="0">
+                    </div>
+                </div>
+                <button type="submit" class="submit-btn">Guardar Montura</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL AGREGAR VENTA (HU02) -->
+    <div id="addClientModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close-btn client-close">&times;</span>
+            <h2>Registrar Nueva Venta</h2>
+            <form id="addClientForm">
+                <div class="form-row">
+                    <div class="form-group" style="width: 40%;">
+                        <label>Cód. Venta:</label>
+                        <input type="text" id="c_id" required readonly style="background-color: #f1f1f1;">
+                    </div>
+                    <div class="form-group" style="width: 60%;">
+                        <label>Fecha:</label>
+                        <input type="date" id="c_date" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Nombre del Cliente:</label>
+                    <input type="text" id="c_name">
+                </div>
+                
+                <h3 style="margin-top: 15px; margin-bottom: 10px; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Detalle de Compra</h3>
+                
+                <div class="form-group">
+                    <label>Montura Seleccionada:</label>
+                    <select id="sel_montura_pivot">
+                        <option value="">Seleccione una Montura...</option>
+                        <!-- Cargado por JS -->
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="width: 50%;">
+                        <label>Otros Detalles (Lunas, etc):</label>
+                        <input type="text" id="c_others" placeholder="Ej: Lunas Antirreflex">
+                    </div>
+                    <div class="form-group" style="width: 50%;">
+                        <label>Vendedora:</label>
+                        <input type="text" id="sel_vendedora" placeholder="Nombre">
+                    </div>
+                </div>
+                
+                <h3 style="margin-top: 15px; margin-bottom: 10px; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Pago</h3>
+                <div class="form-row">
+                    <div class="form-group" style="width: 50%;">
+                        <label>Monto Total (S/.):</label>
+                        <input type="number" step="0.01" id="c_total" required min="0" value="0">
+                    </div>
+                    <div class="form-group" style="width: 50%;">
+                        <label>Método de Pago:</label>
+                        <select id="split_method_1">
+                            <option value="EFECTIVO">EFECTIVO</option>
+                            <option value="VISA">VISA</option>
+                            <option value="YAPE">YAPE</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn" style="margin-top: 15px;">Registrar Venta</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom Dialog Modal para Alertas -->
+    <div id="customDialog" class="custom-dialog-overlay" style="display: none;">
+        <div class="custom-dialog-box">
+            <div class="custom-dialog-header">
+                <i class='bx bx-glasses dialog-icon'></i>
+                <h3 id="customDialogTitle">OPTICA ROMA</h3>
+            </div>
+            <div class="custom-dialog-body">
+                <p id="customDialogMessage"></p>
+            </div>
+            <div class="custom-dialog-footer">
+                <button id="customDialogCancel" class="dialog-btn cancel-btn">Cancelar</button>
+                <button id="customDialogConfirm" class="dialog-btn confirm-btn">Aceptar</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="./controllers/AppController.js"></script>
+</body>
+</html>
