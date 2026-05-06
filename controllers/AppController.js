@@ -1,16 +1,30 @@
 import { AuthController } from './AuthController.js';
 import { MonturaController } from './MonturaController.js';
 import { VentaController } from './VentaController.js';
+import { UsersController } from './UsersController.js';
 
 export class AppController {
     constructor() {
         console.log("Iniciando Arquitectura MVC - Optica Roma");
+        this.session = null;
         this.authController = new AuthController();
         this.monturaController = new MonturaController();
         this.ventaController = new VentaController();
+        this.usersController = new UsersController();
 
         this.initNavigation();
         this.initSidebar();
+    }
+
+    setSession(session) {
+        this.session = session;
+        // Refrescar controladores cuando la sesión esté lista
+        if (this.monturaController) this.monturaController.render();
+        if (this.ventaController) this.ventaController.render();
+    }
+
+    getRole() {
+        return this.session ? this.session.user.role : null;
     }
 
     initNavigation() {

@@ -8,6 +8,8 @@
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/png" href="img/favicon.png">
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     
@@ -57,24 +59,31 @@
                 <i class='bx bx-x' id="mobileCloseBtn"></i>
             </div>
             <ul class="nav-list">
-                <li>
+                <li id="menu-home">
                     <a href="#" class="nav-link active" data-target="home">
                         <i class='bx bx-home-alt'></i>
                         <span class="links_name">INICIO</span>
                     </a>
                 </li>
                 
-                <li>
+                <li id="menu-monturas">
                     <a href="#" class="nav-link" data-target="monturas">
                         <i class='bx bx-glasses-alt'></i>
                         <span class="links_name">MONTURAS</span>
                     </a>
                 </li>
     
-                <li>
+                <li id="menu-ventas">
                     <a href="#" class="nav-link" data-target="clients">
                         <i class='bx bx-id-card'></i>
                         <span class="links_name">VENTAS</span>
+                    </a>
+                </li>
+
+                <li id="menu-users" style="display: none;">
+                    <a href="#" class="nav-link" data-target="users">
+                        <i class='bx bx-group'></i>
+                        <span class="links_name">USUARIOS</span>
                     </a>
                 </li>
                 
@@ -95,7 +104,7 @@
                 </div>
                 <div class="profile-details-top">
                     <i class='bx bxs-user-circle'></i>
-                    <span class="admin_name">Administrador</span>
+                    <span class="admin_name" id="userRoleDisplay">Administrador</span>
                 </div>
             </div>
 
@@ -161,6 +170,37 @@
                                 <th style="width: 12%;">Total</th>
                                 <th style="width: 12%;">Estado</th>
                                 <th style="width: 12%; text-align: right;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Se llena por MVC -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MÓDULO DE USUARIOS (ADMIN ONLY) -->
+            <div id="users" class="content-section">
+                <h1 class="page-title">Gestión</h1>
+                <h2 class="page-subtitle">VENDEDORES</h2>
+                <div class="controls-bar">
+                    <div class="search-input-wrapper">
+                        <i class='bx bx-search'></i>
+                        <input type="text" id="searchUsersInput" placeholder="Buscar vendedor...">
+                    </div>
+                    <div class="actions-group">
+                        <button class="btn-green" id="btnAddUser"><i class='bx bx-user-plus'></i> Nuevo Vendedor</button>
+                    </div>
+                </div>
+                <div class="white-box">
+                    <table class="custom-table" id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Rol</th>
+                                <th>Usuario</th>
+                                <th>Contraseña</th>
+                                <th style="text-align: right;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -261,6 +301,35 @@
                 </div>
 
                 <button type="submit" class="submit-btn" style="margin-top: 15px;">Registrar Venta</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL AGREGAR/EDITAR USUARIO -->
+    <div id="addUserModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn user-close">&times;</span>
+            <h2 id="userModalTitle">Agregar Nuevo Vendedor</h2>
+            <form id="addUserForm">
+                <div class="form-group">
+                    <label>Nombre Completo:</label>
+                    <input type="text" id="u_name" required placeholder="Ej: Maria Perez">
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="width: 50%;">
+                        <label>Usuario (Login):</label>
+                        <input type="text" id="u_username" required placeholder="maria123">
+                    </div>
+                    <div class="form-group" style="width: 50%;">
+                        <label>Rol:</label>
+                        <input type="text" id="u_role" required placeholder="Ej: Vendedora">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Contraseña:</label>
+                    <input type="password" id="u_password" required placeholder="****">
+                </div>
+                <button type="submit" class="submit-btn">Guardar Vendedor</button>
             </form>
         </div>
     </div>

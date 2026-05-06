@@ -22,15 +22,17 @@ export class VentaController {
     }
 
     async init() {
-        await this.loadVentas();
+        await this.render();
     }
 
-    async loadVentas() {
+    async render() {
         try {
             const ventas = await VentaModel.getAll();
-            this.view.renderTable(ventas);
+            const rawRole = (window.app && window.app.getRole()) ? window.app.getRole() : 'vendedora';
+            const role = rawRole.toLowerCase().includes('admin') ? 'admin' : 'vendedora';
+            this.view.renderTable(ventas || [], role);
         } catch (error) {
-            console.error('Error al cargar ventas:', error);
+            console.error('Error al renderizar ventas:', error);
         }
     }
 
@@ -78,7 +80,7 @@ export class VentaController {
             }
 
             this.view.closeModal();
-            await this.loadVentas();
+            await this.render();
             UIHelper.showCustomAlert('Venta registrada con éxito.', 'ÉXITO');
         } catch (error) {
             console.error('Error al registrar venta:', error);
@@ -96,7 +98,7 @@ export class VentaController {
         if (confirm) {
             try {
                 await VentaModel.delete(id);
-                await this.loadVentas();
+                await this.render();
             } catch (error) {
                 console.error('Error al eliminar venta:', error);
                 UIHelper.showCustomAlert('Error al eliminar venta', 'ERROR');

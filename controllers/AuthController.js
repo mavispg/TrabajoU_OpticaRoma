@@ -18,7 +18,8 @@ export class AuthController {
             const session = await AuthModel.getSession();
             if (session) {
                 console.log('Sesión activa encontrada');
-                this.view.showApp();
+                if(window.app) window.app.setSession(session);
+                this.view.showApp(session);
             } else {
                 console.log('No hay sesión activa');
                 this.view.showLogin();
@@ -27,8 +28,10 @@ export class AuthController {
             // Escuchar cambios (cuando la sesión expira o se cierra desde otro lado)
             AuthModel.onAuthStateChange((event, session) => {
                 if (event === 'SIGNED_IN') {
-                    this.view.showApp();
+                    if(window.app) window.app.setSession(session);
+                    this.view.showApp(session);
                 } else if (event === 'SIGNED_OUT') {
+                    if(window.app) window.app.setSession(null);
                     this.view.showLogin();
                 }
             });

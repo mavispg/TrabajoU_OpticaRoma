@@ -17,22 +17,33 @@ export class MonturaView {
         this.modalTitle = document.querySelector('#addMonturaModal h2');
     }
 
-    renderTable(monturas) {
+    renderTable(monturas, role = 'admin') {
         if (!this.tableBody) return;
         this.tableBody.innerHTML = '';
+
+        // Ocultar botón "Nueva Montura" para vendedora
+        if (this.btnAdd) {
+            this.btnAdd.style.display = (role === 'admin') ? 'flex' : 'none';
+        }
+
         monturas.forEach(m => {
             const newRow = document.createElement('tr');
             newRow.setAttribute('data-id', m.id);
+            
+            const actionsHtml = (role === 'admin') 
+                ? `<div class="actions-wrapper">
+                        <button class="icon-btn edit-btn"><i class='bx bxs-edit-alt'></i></button>
+                        <button class="icon-btn delete-btn"><i class='bx bxs-trash'></i></button>
+                   </div>`
+                : `<span class="badge-role">LECTURA</span>`;
+
             newRow.innerHTML = `
                 <td>${m.codigo}</td>
                 <td>${m.nombre}</td>
                 <td>${m.stock_total}(${m.stock_disponible})</td>
                 <td>${UIHelper.formatCurrency(m.precio_venta)}</td>
                 <td class="actions-cell">
-                    <div class="actions-wrapper">
-                        <button class="icon-btn edit-btn"><i class='bx bxs-edit-alt'></i></button>
-                        <button class="icon-btn delete-btn"><i class='bx bxs-trash'></i></button>
-                    </div>
+                    ${actionsHtml}
                 </td>
             `;
             this.tableBody.appendChild(newRow);
@@ -55,14 +66,11 @@ export class MonturaView {
         this.form.reset();
     }
 
-    populateForm(cells) {
-        this.codeInput.value = cells[0].innerText;
-        this.nameInput.value = cells[1].innerText;
-        const stockText = cells[2].innerText;
-        const stockMatch = stockText.match(/(\d+)/);
-        this.stockInput.value = stockMatch ? stockMatch[1] : stockText;
-        const priceText = cells[3].innerText.replace('S/. ', '').replace(',', '');
-        this.sellPriceInput.value = priceText;
+    populateForm(m) {
+        this.codeInput.value = m.codigo;
+        this.nameInput.value = m.nombre;
+        this.stockInput.value = m.stock_total;
+        this.sellPriceInput.value = m.precio_venta;
     }
 
     getFormData() {

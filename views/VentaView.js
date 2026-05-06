@@ -20,7 +20,7 @@ export class VentaView {
         this.methodSelect = document.getElementById('split_method_1');
     }
 
-    renderTable(ventas) {
+    renderTable(ventas, role = 'admin') {
         if (!this.tableBody) return;
         this.tableBody.innerHTML = '';
         ventas.forEach(v => {
@@ -33,6 +33,13 @@ export class VentaView {
             else if(v.modalidad_pago === 'YAPE') methodHtml = `<i class='bx bx-mobile' style='color:#7b2cbf; font-size:18px;'></i> ${methodHtml}`;
             else if(v.modalidad_pago === 'EFECTIVO') methodHtml = `<i class='bx bx-money' style='color:#27ae60; font-size:18px;'></i> ${methodHtml}`;
 
+            const actionsHtml = (role === 'admin') 
+                ? `<div class="actions-wrapper">
+                        <button class="icon-btn edit-btn" title="Editar Venta"><i class='bx bxs-edit-alt'></i></button>
+                        <button class="icon-btn delete-btn" title="Eliminar Venta"><i class='bx bxs-trash'></i></button>
+                   </div>`
+                : `<span class="badge-role">REGISTRADO</span>`;
+
             newRow.innerHTML = `
                 <td><strong>${v.codigo_venta}</strong></td>
                 <td>${v.nombre_cliente || 'N/A'}</td>
@@ -41,10 +48,7 @@ export class VentaView {
                 <td><strong>${UIHelper.formatCurrency(v.monto_total)}</strong><br><small>${methodHtml}</small></td>
                 <td><span class="status-badge status-paid">${v.estado}</span></td>
                 <td class="actions-cell">
-                    <div class="actions-wrapper">
-                        <button class="icon-btn edit-btn" title="Editar Venta"><i class='bx bxs-edit-alt'></i></button>
-                        <button class="icon-btn delete-btn" title="Eliminar Venta"><i class='bx bxs-trash'></i></button>
-                    </div>
+                    ${actionsHtml}
                 </td>
             `;
             this.tableBody.appendChild(newRow);

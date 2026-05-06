@@ -1,31 +1,24 @@
+import { supabase } from './supabaseClient.js';
+
 export class VentaModel {
-    /**
-     * Helper temporal para manejar la base de datos de Ventas en LocalStorage
-     */
-    static getLocalDB() {
-        const db = localStorage.getItem('optica_ventas');
-        return db ? JSON.parse(db) : [];
-    }
-
-    static saveLocalDB(data) {
-        localStorage.setItem('optica_ventas', JSON.stringify(data));
-    }
-
     /**
      * Obtiene todas las ventas
      */
     static async getAll() {
-        let data = this.getLocalDB();
-        // Ordenar por fecha descendente o código
-        data.sort((a, b) => b.codigo_venta.localeCompare(a.codigo_venta));
-        return data;
+        const { data, error } = await supabase
+            .from('ventas')
+            .select('*')
+            .order('codigo_venta', { ascending: false });
+            
+        if (error) throw error;
+        return data || [];
     }
 
     /**
      * Genera automáticamente el próximo código de venta
      */
     static async getNextCode() {
-        let data = this.getLocalDB();
+        const data = await this.getAll();
         if (data.length === 0) return 'V-001';
         
         let maxCode = 0;
@@ -44,31 +37,29 @@ export class VentaModel {
      * Registra una nueva venta
      */
     static async create(venta) {
-        let data = this.getLocalDB();
-        const newVenta = {
-            id: Date.now().toString(),
-            codigo_venta: venta.codigo_venta,
-            nombre_cliente: venta.nombre_cliente,
-            fecha: venta.fecha,
-            datos_compra: venta.datos_compra, // string concatenado de montura + lunas
-            monto_total: venta.monto_total,
-            estado: 'CANCELADO', // Por defecto para esta iteración
-            modalidad_pago: venta.modalidad_pago,
-            montura_id: venta.montura_id
-        };
-        data.push(newVenta);
-        this.saveLocalDB(data);
+        const { error } = await supabase
+            .from('ventas')
+            .insert([{
+                codigo_venta: venta.codigo_venta,
+                nombre_cliente: venta.nombre_cliente,
+                fecha: venta.fecha,
+                datos_compra: venta.datos_compra,
+                monto_total: venta.monto_total,
+                estado: 'CANCELADO',
+                modalidad_pago: venta.modalidad_pago,
+                montura_id: venta.montura_id
+            }]);
+            
+        if (error) throw error;
     }
     
     /**
      * Actualiza una venta existente
      */
     static async update(id, venta) {
-        let data = this.getLocalDB();
-        const index = data.findIndex(v => v.id === id);
-        if (index !== -1) {
-            data[index] = {
-                ...data[index],
+        const { error } = await supabase
+            .from('ventas')
+            .update({
                 codigo_venta: venta.codigo_venta,
                 nombre_cliente: venta.nombre_cliente,
                 fecha: venta.fecha,
@@ -76,17 +67,21 @@ export class VentaModel {
                 monto_total: venta.monto_total,
                 modalidad_pago: venta.modalidad_pago,
                 montura_id: venta.montura_id
-            };
-            this.saveLocalDB(data);
-        }
+            })
+            .eq('id', id);
+            
+        if (error) throw error;
     }
     
     /**
      * Elimina una venta
      */
     static async delete(id) {
-        let data = this.getLocalDB();
-        data = data.filter(v => v.id !== id);
-        this.saveLocalDB(data);
+        const { error } = await supabase
+            .from('ventas')
+            .delete()
+            .eq('id', id);
+            
+        if (error) throw error;
     }
 }

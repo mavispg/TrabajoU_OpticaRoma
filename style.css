@@ -693,11 +693,49 @@ body {
     color: #f1c40f;
 }
 /* Let's stick to simple FontAwesome-like styling for icons */
-.icon-btn i {
-    color: #000;
-    font-size: 24px;
-} 
-/* Override for specific icons in wireframe - Removed empty rules */
+/* Badge Role */
+.badge-role {
+    background: #e2e8f0;
+    color: #2e61b3;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* Delete Button for Users */
+.btn-delete {
+    background: #ff4d4d;
+    color: #fff;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+.btn-delete:hover {
+    background: #cc0000;
+}
+
+/* Password Toggle Styling */
+.pass-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.btn-toggle-pass {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    transition: color 0.3s;
+}
+.btn-toggle-pass:hover {
+    color: #2e61b3;
+}
 
 
 /* Responsive */

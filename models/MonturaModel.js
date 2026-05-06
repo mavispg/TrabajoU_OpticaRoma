@@ -1,32 +1,24 @@
-// export { supabase } from './supabaseClient.js'; // Comentado temporalmente
+import { supabase } from './supabaseClient.js';
 
 export class MonturaModel {
-    /**
-     * Helper temporal para manejar la base de datos en LocalStorage
-     */
-    static getLocalDB() {
-        const db = localStorage.getItem('optica_monturas');
-        return db ? JSON.parse(db) : [];
-    }
-
-    static saveLocalDB(data) {
-        localStorage.setItem('optica_monturas', JSON.stringify(data));
-    }
-
     /**
      * Obtiene todas las monturas ordenadas por código
      */
     static async getAll() {
-        let data = this.getLocalDB();
-        data.sort((a, b) => a.codigo.localeCompare(b.codigo));
-        return data;
+        const { data, error } = await supabase
+            .from('monturas')
+            .select('*')
+            .order('codigo', { ascending: true });
+            
+        if (error) throw error;
+        return data || [];
     }
 
     /**
      * Genera automáticamente el próximo código de montura
      */
     static async getNextCode() {
-        let data = this.getLocalDB();
+        const data = await this.getAll();
         if (data.length === 0) return '001';
         
         let maxCode = 0;
@@ -44,45 +36,46 @@ export class MonturaModel {
      * Crea una nueva montura
      */
     static async create(montura) {
-        let data = this.getLocalDB();
-        // Generar un ID temporal para local
-        const newMontura = {
-            id: Date.now().toString(),
-            codigo: montura.codigo,
-            nombre: montura.nombre,
-            stock_total: montura.stock_total,
-            stock_disponible: montura.stock_disponible,
-            precio_venta: montura.precio_venta
-        };
-        data.push(newMontura);
-        this.saveLocalDB(data);
+        const { error } = await supabase
+            .from('monturas')
+            .insert([{
+                codigo: montura.codigo,
+                nombre: montura.nombre,
+                stock_total: montura.stock_total,
+                stock_disponible: montura.stock_disponible,
+                precio_venta: montura.precio_venta
+            }]);
+            
+        if (error) throw error;
     }
 
     /**
      * Actualiza una montura existente
      */
     static async update(id, montura) {
-        let data = this.getLocalDB();
-        const index = data.findIndex(m => m.id === id);
-        if (index !== -1) {
-            data[index] = {
-                ...data[index],
+        const { error } = await supabase
+            .from('monturas')
+            .update({
                 codigo: montura.codigo,
                 nombre: montura.nombre,
                 stock_total: montura.stock_total,
                 stock_disponible: montura.stock_disponible,
                 precio_venta: montura.precio_venta
-            };
-            this.saveLocalDB(data);
-        }
+            })
+            .eq('id', id);
+            
+        if (error) throw error;
     }
 
     /**
      * Elimina una montura
      */
     static async delete(id) {
-        let data = this.getLocalDB();
-        data = data.filter(m => m.id !== id);
-        this.saveLocalDB(data);
+        const { error } = await supabase
+            .from('monturas')
+            .delete()
+            .eq('id', id);
+            
+        if (error) throw error;
     }
 }

@@ -20,15 +20,17 @@ export class MonturaController {
     }
 
     async init() {
-        await this.loadMonturas();
+        await this.render();
     }
 
-    async loadMonturas() {
+    async render() {
         try {
             const monturas = await MonturaModel.getAll();
-            this.view.renderTable(monturas);
+            const rawRole = (window.app && window.app.getRole()) ? window.app.getRole() : 'vendedora';
+            const role = rawRole.toLowerCase().includes('admin') ? 'admin' : 'vendedora';
+            this.view.renderTable(monturas || [], role);
         } catch (error) {
-            console.error('Error al cargar monturas:', error);
+            console.error('Error al renderizar monturas:', error);
         }
     }
 
@@ -39,27 +41,35 @@ export class MonturaController {
         this.view.openModal(false, nextCode);
     }
 
+    async handleEditClick(id) {
+        this.isEditing = true;
+        this.currentEditId = id;
+        const monturas = await MonturaModel.getAll();
+        const montura = monturas.find(m => m.id === id);
+        if (montura) {
+            this.view.openModal(true);
+            this.view.populateForm(montura);
+        }
+    }
+
     async handleFormSubmit(formData) {
         try {
             if (this.isEditing && this.currentEditId) {
                 await MonturaModel.update(this.currentEditId, formData);
+                UIHelper.showCustomAlert('Montura actualizada con éxito.', 'ÉXITO');
             } else {
                 await MonturaModel.create(formData);
+                UIHelper.showCustomAlert('Montura registrada con éxito.', 'ÉXITO');
             }
+
             this.view.closeModal();
-            await this.loadMonturas();
+            await this.render();
         } catch (error) {
             console.error('Error al guardar montura:', error);
-            UIHelper.showCustomAlert('Error al guardar montura: ' + error.message, 'ERROR');
+            UIHelper.showCustomAlert('Error al guardar: ' + error.message, 'ERROR');
         }
     }
 
-    handleEditClick(id, cells) {
-        this.isEditing = true;
-        this.currentEditId = id;
-        this.view.openModal(true);
-        this.view.populateForm(cells);
-    }
 
     async handleDeleteClick(id) {
         const confirm = await UIHelper.showCustomConfirm('¿Estás seguro de eliminar esta montura?', { 
@@ -71,7 +81,7 @@ export class MonturaController {
         if (confirm) {
             try {
                 await MonturaModel.delete(id);
-                await this.loadMonturas();
+                await this.render();
             } catch (error) {
                 console.error('Error al eliminar montura:', error);
                 UIHelper.showCustomAlert('Error al eliminar montura', 'ERROR');
