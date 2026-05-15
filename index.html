@@ -115,11 +115,90 @@
                 </div>
             </div>
 
-            <!-- DASHBOARD BÁSICO -->
+            <!-- DASHBOARD DINÁMICO -->
             <div id="home" class="content-section active">
-                <h1 class="page-title">Bienvenido</h1>
-                <h2 class="page-subtitle">Sistema en Desarrollo</h2>
-                <p style="margin-top: 20px; color: #666;">Selecciona una opción del menú lateral para comenzar.</p>
+                <h1 class="page-title">Panel de Control</h1>
+
+                <!-- Tarjetas de Resumen -->
+                <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-top: 25px;">
+                    <div class="stat-card" style="background: linear-gradient(135deg, #2e61b3, #4a90e2); color: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(46,97,179,0.3);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <p style="font-size: 14px; opacity: 0.9;">Ventas Totales</p>
+                                <h3 id="stat-total-sales" style="font-size: 24px; margin-top: 5px;">S/. 0.00</h3>
+                            </div>
+                            <i class='bx bx-trending-up' style="font-size: 40px; opacity: 0.3;"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card" style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid #27ae60;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <p style="font-size: 14px; color: #666;">Clientes Registrados</p>
+                                <h3 id="stat-total-clients" style="font-size: 24px; margin-top: 5px; color: #2c3e50;">0</h3>
+                            </div>
+                            <i class='bx bx-user' style="font-size: 40px; color: #27ae60; opacity: 0.2;"></i>
+                        </div>
+                    </div>
+
+                    <div class="stat-card" style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid #e67e22;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <p style="font-size: 14px; color: #666;">Stock por Agotarse</p>
+                                <h3 id="stat-low-stock" style="font-size: 24px; margin-top: 5px; color: #2c3e50;">0</h3>
+                            </div>
+                            <i class='bx bx-error-circle' style="font-size: 40px; color: #e67e22; opacity: 0.2;"></i>
+                        </div>
+                    </div>
+
+                    <div class="stat-card" style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid #7b2cbf;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <p style="font-size: 14px; color: #666;">Ventas de Hoy</p>
+                                <h3 id="stat-today-sales" style="font-size: 24px; margin-top: 5px; color: #2c3e50;">0</h3>
+                            </div>
+                            <i class='bx bx-cart-alt' style="font-size: 40px; color: #7b2cbf; opacity: 0.2;"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Segunda Fila: Actividad Reciente -->
+                <div style="margin-top: 30px; display: grid; grid-template-columns: 2fr 1fr; gap: 25px;">
+                    <div class="white-box" style="padding: 20px; border-radius: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="font-size: 18px; color: #2c3e50;">Últimas Ventas Realizadas</h3>
+                            <button class="btn-link" onclick="document.querySelector('[data-target=\'clients\']').click()" style="color: #2e61b3; background: none; border: none; cursor: pointer; font-weight: bold;">Ver todas</button>
+                        </div>
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Cliente</th>
+                                    <th>Monto</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-sales-list">
+                                <!-- Se llena por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="white-box" style="padding: 20px; border-radius: 15px; background: #f8fbff;">
+                        <h3 style="font-size: 18px; color: #2c3e50; margin-bottom: 20px;">Acciones Rápidas</h3>
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <button onclick="document.querySelector('[data-target=\'clients\']').click(); setTimeout(()=>document.getElementById('btnAddClient').click(), 100)" style="width: 100%; padding: 12px; border-radius: 10px; border: none; background: #2e61b3; color: white; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: bold; transition: 0.3s;">
+                                <i class='bx bx-cart-add' style="font-size: 20px;"></i> Registrar Nueva Venta
+                            </button>
+                            <button onclick="document.querySelector('[data-target=\'clientes-mgmt\']').click(); setTimeout(()=>document.getElementById('btnOpenClientModal').click(), 100)" style="width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid #2e61b3; background: white; color: #2e61b3; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: bold; transition: 0.3s;">
+                                <i class='bx bx-user-plus' style="font-size: 20px;"></i> Agregar Nuevo Cliente
+                            </button>
+                            <button onclick="document.querySelector('[data-target=\'monturas\']').click()" style="width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid #d1d8e0; background: white; color: #666; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: 500; transition: 0.3s;">
+                                <i class='bx bx-package' style="font-size: 20px;"></i> Revisar Inventario
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- MÓDULO DE MONTURAS (HU05) -->

@@ -4,6 +4,7 @@ import { VentaController } from './VentaController.js';
 import { UsersController } from './UsersController.js';
 import { ClientController } from './ClientController.js';
 import { LabController } from './LabController.js';
+import { DashboardController } from './DashboardController.js';
 
 export class AppController {
     constructor() {
@@ -15,6 +16,7 @@ export class AppController {
         this.usersController = new UsersController();
         this.clientController = new ClientController();
         this.labController = new LabController();
+        this.dashboardController = new DashboardController();
 
         this.initNavigation();
         this.initSidebar();
