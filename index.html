@@ -72,6 +72,13 @@
                         <span class="links_name">MONTURAS</span>
                     </a>
                 </li>
+
+                <li id="menu-clientes">
+                    <a href="#" class="nav-link" data-target="clientes-mgmt">
+                        <i class='bx bx-user-pin'></i>
+                        <span class="links_name">CLIENTES</span>
+                    </a>
+                </li>
     
                 <li id="menu-ventas">
                     <a href="#" class="nav-link" data-target="clients">
@@ -137,6 +144,36 @@
                                 <th style="width: 15%;">Stock(Disp)</th>
                                 <th style="width: 15%;">P. Venta</th>
                                 <th style="width: 15%; text-align: right;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Se llena por MVC -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MÓDULO DE CLIENTES (HU01) -->
+            <div id="clientes-mgmt" class="content-section">
+                <h1 class="page-title">Gestión</h1>
+                <h2 class="page-subtitle">CLIENTES</h2>
+                <div class="controls-bar">
+                    <div class="search-input-wrapper">
+                        <i class='bx bx-search'></i>
+                        <input type="text" placeholder="Buscar cliente...">
+                    </div>
+                    <div class="actions-group">
+                        <button class="btn-green" id="btnOpenClientModal"><i class='bx bx-plus'></i> Nuevo Cliente</button>
+                    </div>
+                </div>
+                <div class="white-box">
+                    <table class="custom-table" id="clientsManagementTable">
+                        <thead>
+                            <tr>
+                                <th>DNI</th>
+                                <th>Nombre Completo</th>
+                                <th>Celular</th>
+                                <th style="text-align: right;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -259,11 +296,44 @@
                         <input type="date" id="c_date" required>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Nombre del Cliente:</label>
-                    <input type="text" id="c_name">
+                <div class="form-row">
+                    <div class="form-group" style="width: 40%;">
+                        <label>DNI del Cliente:</label>
+                        <div style="display: flex; gap: 5px;">
+                            <input type="text" id="c_dni" placeholder="8 dígitos" maxlength="8">
+                            <button type="button" id="btnQuickAddClient" class="btn-green" style="padding: 5px 10px; height: 38px;" title="Nuevo Cliente">
+                                <i class='bx bx-plus'></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group" style="width: 60%;">
+                        <label>Nombre del Cliente:</label>
+                        <input type="text" id="c_name" readonly placeholder="Se autocompleta con DNI" style="background-color: #f9f9f9;">
+                    </div>
                 </div>
                 
+                <h3 style="margin-top: 15px; margin-bottom: 10px; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Medida de Lunas</h3>
+                <div class="measurement-grid" style="display: grid; grid-template-columns: 40px 1fr 1fr 1fr; gap: 8px; margin-bottom: 15px; align-items: center;">
+                    <div style="font-weight: bold; font-size: 11px; color: #666;">OJO</div>
+                    <div style="text-align: center; font-weight: bold; font-size: 11px; color: #666;">ESF</div>
+                    <div style="text-align: center; font-weight: bold; font-size: 11px; color: #666;">CIL</div>
+                    <div style="text-align: center; font-weight: bold; font-size: 11px; color: #666;">EJE</div>
+                    
+                    <div style="font-weight: bold; color: #2e61b3;">OD</div>
+                    <input type="text" id="m_od_esf" placeholder="0.00" style="width: 100%; padding: 6px 2px; text-align: center; border: 1px solid #ccc; border-radius: 4px;">
+                    <input type="text" id="m_od_cil" placeholder="0.00" style="width: 100%; padding: 6px 2px; text-align: center; border: 1px solid #ccc; border-radius: 4px;">
+                    <input type="text" id="m_od_eje" placeholder="0°" style="width: 100%; padding: 6px 2px; text-align: center; border: 1px solid #ccc; border-radius: 4px;">
+                    
+                    <div style="font-weight: bold; color: #2e61b3;">OI</div>
+                    <input type="text" id="m_oi_esf" placeholder="0.00" style="width: 100%; padding: 6px 2px; text-align: center; border: 1px solid #ccc; border-radius: 4px;">
+                    <input type="text" id="m_oi_cil" placeholder="0.00" style="width: 100%; padding: 6px 2px; text-align: center; border: 1px solid #ccc; border-radius: 4px;">
+                    <input type="text" id="m_oi_eje" placeholder="0°" style="width: 100%; padding: 6px 2px; text-align: center; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <div class="form-group" style="width: 50%;">
+                    <label>DIP (mm):</label>
+                    <input type="text" id="m_dip" placeholder="Ej: 62">
+                </div>
+
                 <h3 style="margin-top: 15px; margin-bottom: 10px; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Detalle de Compra</h3>
                 
                 <div class="form-group">
@@ -275,13 +345,34 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group" style="width: 50%;">
-                        <label>Otros Detalles (Lunas, etc):</label>
-                        <input type="text" id="c_others" placeholder="Ej: Lunas Antirreflex">
+                        <label>Tipo de Lunas:</label>
+                        <input type="text" id="c_lunas" placeholder="Ej: Antirreflex, Multifocal">
                     </div>
                     <div class="form-group" style="width: 50%;">
-                        <label>Vendedora:</label>
-                        <input type="text" id="sel_vendedora" placeholder="Nombre">
+                        <label>Laboratorio (Proveedor):</label>
+                        <div style="display: flex; gap: 5px;">
+                            <select id="sel_lab">
+                                <option value="">Seleccione...</option>
+                                <!-- Cargado por JS -->
+                            </select>
+                            <button type="button" id="btnOpenLabMgmt" class="btn-green" style="padding: 5px 10px; height: 38px;" title="Gestionar Laboratorios">
+                                <i class='bx bx-cog'></i>
+                            </button>
+                        </div>
                     </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="width: 100%;">
+                        <label>Otros Detalles:</label>
+                        <input type="text" id="c_others" placeholder="Ej: Estuche, Paño">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Vendedora:</label>
+                    <select id="sel_vendedora">
+                        <option value="">Seleccione...</option>
+                        <!-- Cargado por JS -->
+                    </select>
                 </div>
                 
                 <h3 style="margin-top: 15px; margin-bottom: 10px; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Pago</h3>
@@ -301,6 +392,29 @@
                 </div>
 
                 <button type="submit" class="submit-btn" style="margin-top: 15px;">Registrar Venta</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL GESTIÓN DE CLIENTES (HU01) -->
+    <div id="addClientManagementModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn client-mgmt-close">&times;</span>
+            <h2 id="clientMgmtModalTitle">Nuevo Cliente</h2>
+            <form id="addClientManagementForm">
+                <div class="form-group">
+                    <label>DNI (8 dígitos):</label>
+                    <input type="text" id="cl_dni" required placeholder="Ej: 45678912" maxlength="8">
+                </div>
+                <div class="form-group">
+                    <label>Nombre Completo:</label>
+                    <input type="text" id="cl_name" required placeholder="Ej: Juan Perez">
+                </div>
+                <div class="form-group">
+                    <label>Celular (9 dígitos):</label>
+                    <input type="text" id="cl_phone" required placeholder="987654321">
+                </div>
+                <button type="submit" class="submit-btn">Guardar Cliente</button>
             </form>
         </div>
     </div>
@@ -331,6 +445,45 @@
                 </div>
                 <button type="submit" class="submit-btn">Guardar Vendedor</button>
             </form>
+        </div>
+    </div>
+
+    <!-- MODAL GESTIÓN DE LABORATORIOS -->
+    <div id="labMgmtModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close-btn lab-mgmt-close">&times;</span>
+            <h2 style="color: #2e61b3;">Gestión de Laboratorios</h2>
+            
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                <input type="text" id="newLabName" placeholder="Nombre del laboratorio" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+                <button id="btnAddLab" class="btn-green">Agregar</button>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th style="width: 60px;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="labTableBody">
+                        <!-- Se llena por JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL HISTORIAL VISUAL (HU01) -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <span class="close-btn history-close">&times;</span>
+            <h2 style="color: #2e61b3; border-bottom: 2px solid #2e61b3; padding-bottom: 10px;">Historial Visual: <span id="historyClientName" style="color: #333;"></span></h2>
+            <div id="historyList" style="margin-top: 20px; max-height: 400px; overflow-y: auto;">
+                <!-- Se llena por JS -->
+                <p>Cargando historial...</p>
+            </div>
         </div>
     </div>
 

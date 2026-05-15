@@ -2,6 +2,8 @@ import { AuthController } from './AuthController.js';
 import { MonturaController } from './MonturaController.js';
 import { VentaController } from './VentaController.js';
 import { UsersController } from './UsersController.js';
+import { ClientController } from './ClientController.js';
+import { LabController } from './LabController.js';
 
 export class AppController {
     constructor() {
@@ -11,6 +13,8 @@ export class AppController {
         this.monturaController = new MonturaController();
         this.ventaController = new VentaController();
         this.usersController = new UsersController();
+        this.clientController = new ClientController();
+        this.labController = new LabController();
 
         this.initNavigation();
         this.initSidebar();

@@ -12,12 +12,24 @@ export class VentaView {
         // Inputs del formulario
         this.codeInput = document.getElementById('c_id');
         this.dateInput = document.getElementById('c_date');
+        this.dniInput = document.getElementById('c_dni');
         this.nameInput = document.getElementById('c_name');
         this.monturaSelect = document.getElementById('sel_montura_pivot');
+        this.lunasInput = document.getElementById('c_lunas');
+        this.labSelect = document.getElementById('sel_lab');
         this.othersInput = document.getElementById('c_others');
         this.vendedoraInput = document.getElementById('sel_vendedora');
         this.totalInput = document.getElementById('c_total');
         this.methodSelect = document.getElementById('split_method_1');
+
+        // Nuevos campos de medida
+        this.odEsf = document.getElementById('m_od_esf');
+        this.odCil = document.getElementById('m_od_cil');
+        this.odEje = document.getElementById('m_od_eje');
+        this.oiEsf = document.getElementById('m_oi_esf');
+        this.oiCil = document.getElementById('m_oi_cil');
+        this.oiEje = document.getElementById('m_oi_eje');
+        this.dipInput = document.getElementById('m_dip');
     }
 
     renderTable(ventas, role = 'admin') {
@@ -33,6 +45,29 @@ export class VentaView {
             else if(v.modalidad_pago === 'YAPE') methodHtml = `<i class='bx bx-mobile' style='color:#7b2cbf; font-size:18px;'></i> ${methodHtml}`;
             else if(v.modalidad_pago === 'EFECTIVO') methodHtml = `<i class='bx bx-money' style='color:#27ae60; font-size:18px;'></i> ${methodHtml}`;
 
+            // Formatear datos_compra para que se vea ordenado (un dato debajo del otro)
+            let formattedDatos = "";
+            if (v.datos_compra) {
+                const partes = v.datos_compra.split('|');
+                formattedDatos = partes.map(p => {
+                    const texto = p.trim();
+                    if(!texto) return "";
+                    
+                    // Añadir iconos según el tipo de dato
+                    let icon = "<i class='bx bx-chevron-right' style='color:#aaa;'></i>";
+                    if(texto.startsWith("M:")) icon = "<i class='bx bx-glasses' style='color:#2e61b3;'></i>";
+                    if(texto.includes("L:")) icon = "<i class='bx bxs-layer' style='color:#3498db;'></i>";
+                    if(texto.includes("Lab:")) icon = "<i class='bx bxs-factory' style='color:#e67e22;'></i>";
+                    if(texto.includes("Otros:")) icon = "<i class='bx bx-plus-circle' style='color:#27ae60;'></i>";
+                    if(texto.includes("Med:")) icon = "<i class='bx bx-show-alt' style='color:#7b2cbf;'></i>";
+                    if(texto.includes("Vend:")) icon = "<i class='bx bx-user' style='color:#666;'></i>";
+                    
+                    return `<div style="margin-bottom: 4px; display: flex; align-items: flex-start; gap: 5px;">
+                                ${icon} <span>${texto}</span>
+                            </div>`;
+                }).join("");
+            }
+
             const actionsHtml = (role === 'admin') 
                 ? `<div class="actions-wrapper">
                         <button class="icon-btn edit-btn" title="Editar Venta"><i class='bx bxs-edit-alt'></i></button>
@@ -43,7 +78,7 @@ export class VentaView {
             newRow.innerHTML = `
                 <td><strong>${v.codigo_venta}</strong></td>
                 <td>${v.nombre_cliente || 'N/A'}</td>
-                <td><small>${v.datos_compra}</small></td>
+                <td style="padding: 12px 8px;">${formattedDatos || 'N/A'}</td>
                 <td>${v.fecha}</td>
                 <td><strong>${UIHelper.formatCurrency(v.monto_total)}</strong><br><small>${methodHtml}</small></td>
                 <td><span class="status-badge status-paid">${v.estado}</span></td>
@@ -66,6 +101,25 @@ export class VentaView {
                 opt.dataset.precio = m.precio_venta;
                 this.monturaSelect.appendChild(opt);
             }
+        });
+    }
+
+    /**
+     * Ya no se usa select de clientes, pero dejamos el método por si acaso
+     * @param {Array} clientes 
+     */
+    populateClientesSelect(clientes) {
+        // Obsoleto con búsqueda por DNI
+    }
+
+    populateVendedorasSelect(vendedores) {
+        if (!this.vendedoraInput) return;
+        this.vendedoraInput.innerHTML = '<option value="">Seleccione...</option>';
+        vendedores.forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v.nombre;
+            opt.text = v.nombre;
+            this.vendedoraInput.appendChild(opt);
         });
     }
 
@@ -92,23 +146,53 @@ export class VentaView {
         this.codeInput.value = venta.codigo_venta;
         this.dateInput.value = venta.fecha;
         this.nameInput.value = venta.nombre_cliente;
+        this.dniInput.value = ""; 
         this.monturaSelect.value = venta.montura_id || '';
+        
+        // Limpiar inputs antes de llenar
+        this.lunasInput.value = "";
+        this.labSelect.value = "";
+        this.othersInput.value = "";
+        this.vendedoraInput.value = "";
+
+        // Parsear datos_compra
+        if (venta.datos_compra) {
+            const partes = venta.datos_compra.split('|');
+            partes.forEach(p => {
+                const txt = p.trim();
+                if (txt.startsWith("L:")) this.lunasInput.value = txt.replace("L:", "").trim();
+                if (txt.startsWith("Lab:")) this.labSelect.value = txt.replace("Lab:", "").trim();
+                if (txt.startsWith("Otros:")) this.othersInput.value = txt.replace("Otros:", "").trim();
+                if (txt.startsWith("Vend:")) this.vendedoraInput.value = txt.replace("Vend:", "").trim();
+                
+                if (txt.startsWith("Med:")) {
+                    const med = txt.replace("Med:", "").trim();
+                    try {
+                        const odMatch = med.match(/OD\((.*?),(.*?),(.*?)\)/);
+                        if (odMatch) {
+                            this.odEsf.value = odMatch[1].trim();
+                            this.odCil.value = odMatch[2].trim();
+                            this.odEje.value = odMatch[3].trim();
+                        }
+                        const oiMatch = med.match(/OI\((.*?),(.*?),(.*?)\)/);
+                        if (oiMatch) {
+                            this.oiEsf.value = oiMatch[1].trim();
+                            this.oiCil.value = oiMatch[2].trim();
+                            this.oiEje.value = oiMatch[3].trim();
+                        }
+                        const dipMatch = med.match(/DIP\((.*?)\)/);
+                        if (dipMatch) {
+                            this.dipInput.value = dipMatch[1].trim();
+                        }
+                    } catch (e) {
+                        console.warn("Error parseando medidas:", e);
+                    }
+                }
+            });
+        }
+
         this.totalInput.value = venta.monto_total;
         this.methodSelect.value = venta.modalidad_pago;
-        
-        // Extraer 'Otros' y 'Vend' de los datos concatenados si existen
-        let otros = "";
-        let vend = "";
-        if (venta.datos_compra) {
-            if (venta.datos_compra.includes('Otros:')) {
-                otros = venta.datos_compra.split('Otros:')[1].split('|')[0].trim();
-            }
-            if (venta.datos_compra.includes('Vend:')) {
-                vend = venta.datos_compra.split('Vend:')[1].trim();
-            }
-        }
-        this.othersInput.value = otros;
-        this.vendedoraInput.value = vend;
     }
 
     closeModal() {
@@ -123,13 +207,33 @@ export class VentaView {
             const monturaText = this.monturaSelect.options[this.monturaSelect.selectedIndex].text;
             datosCompra += "M: " + monturaText.split('(')[0].trim() + " ";
         }
-        
-        if (this.othersInput.value.trim() !== '') {
-            datosCompra += "| Otros: " + this.othersInput.value.trim();
+
+        if (this.lunasInput.value.trim() !== '') {
+            datosCompra += "| L: " + this.lunasInput.value.trim() + " ";
+        }
+
+        if (this.labSelect.value.trim() !== '') {
+            datosCompra += "| Lab: " + this.labSelect.value.trim() + " ";
         }
         
-        if (this.vendedoraInput.value.trim() !== '') {
-            datosCompra += " | Vend: " + this.vendedoraInput.value.trim();
+        if (this.othersInput.value.trim() !== '') {
+            datosCompra += "| Otros: " + this.othersInput.value.trim() + " ";
+        }
+
+        // Agregar Medidas
+        const dip = this.dipInput ? this.dipInput.value : '0';
+        const odEsf = this.odEsf ? this.odEsf.value : '0';
+        const odCil = this.odCil ? this.odCil.value : '0';
+        const odEje = this.odEje ? this.odEje.value : '0';
+        const oiEsf = this.oiEsf ? this.oiEsf.value : '0';
+        const oiCil = this.oiCil ? this.oiCil.value : '0';
+        const oiEje = this.oiEje ? this.oiEje.value : '0';
+
+        const medStr = `OD(${odEsf}, ${odCil}, ${odEje}) OI(${oiEsf}, ${oiCil}, ${oiEje}) DIP(${dip})`;
+        datosCompra += "| Med: " + medStr + " ";
+        
+        if (this.vendedoraInput && this.vendedoraInput.value.trim() !== '') {
+            datosCompra += "| Vend: " + this.vendedoraInput.value.trim();
         }
 
         return {
@@ -214,6 +318,33 @@ export class VentaView {
                     this.totalInput.value = selected.dataset.precio;
                 }
             });
+        }
+    }
+
+    /**
+     * Vincula la búsqueda automática por DNI
+     * @param {Function} handler 
+     */
+    bindDniSearch(handler) {
+        if (this.dniInput) {
+            this.dniInput.addEventListener('keyup', (e) => {
+                if (this.dniInput.value.length === 8) {
+                    handler(this.dniInput.value);
+                } else {
+                    this.nameInput.value = "";
+                }
+            });
+        }
+    }
+
+    /**
+     * Vincula el botón "+" para agregar cliente rápido
+     * @param {Function} handler 
+     */
+    bindQuickAddClient(handler) {
+        const btn = document.getElementById('btnQuickAddClient');
+        if (btn) {
+            btn.addEventListener('click', () => handler());
         }
     }
 }

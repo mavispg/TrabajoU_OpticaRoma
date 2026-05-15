@@ -15,6 +15,20 @@ export class VentaModel {
     }
 
     /**
+     * Obtiene una venta por ID
+     */
+    static async getById(id) {
+        const { data, error } = await supabase
+            .from('ventas')
+            .select('*')
+            .eq('id', id)
+            .maybeSingle();
+            
+        if (error) throw error;
+        return data;
+    }
+
+    /**
      * Genera automáticamente el próximo código de venta
      */
     static async getNextCode() {

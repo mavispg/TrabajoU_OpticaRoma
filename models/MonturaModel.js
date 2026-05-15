@@ -68,6 +68,31 @@ export class MonturaModel {
     }
 
     /**
+     * Actualiza el stock disponible sumando o restando una cantidad
+     */
+    static async updateStock(id, cantidad) {
+        // 1. Obtener stock actual
+        const { data, error: fetchError } = await supabase
+            .from('monturas')
+            .select('stock_disponible')
+            .eq('id', id)
+            .single();
+            
+        if (fetchError) throw fetchError;
+
+        // 2. Calcular nuevo stock
+        const nuevoStock = (data.stock_disponible || 0) + cantidad;
+
+        // 3. Guardar
+        const { error: updateError } = await supabase
+            .from('monturas')
+            .update({ stock_disponible: nuevoStock })
+            .eq('id', id);
+            
+        if (updateError) throw updateError;
+    }
+
+    /**
      * Elimina una montura
      */
     static async delete(id) {

@@ -1,5 +1,7 @@
 import { VentaModel } from '../models/VentaModel.js';
 import { MonturaModel } from '../models/MonturaModel.js';
+import { UsersModel } from '../models/UsersModel.js';
+import { ClientModel } from '../models/ClientModel.js';
 import { VentaView } from '../views/VentaView.js';
 import { UIHelper } from '../views/UIHelper.js';
 
@@ -7,7 +9,9 @@ export class VentaController {
     constructor() {
         this.view = new VentaView();
         this.isEditing = false;
+        this.isEditing = false;
         this.currentEditId = null;
+        this.usersModel = new UsersModel();
 
         // Bind events
         this.view.bindAddVenta(this.handleAddVentaClick.bind(this));
@@ -16,6 +20,8 @@ export class VentaController {
         this.view.bindTableActions(this.handleEditClick.bind(this), this.handleDeleteClick.bind(this));
         this.view.bindSearch();
         this.view.bindMonturaSelect();
+        this.view.bindDniSearch(this.handleDniSearch.bind(this));
+        this.view.bindQuickAddClient(this.handleQuickAddClient.bind(this));
 
         // Cargar datos iniciales
         this.init();
@@ -45,6 +51,14 @@ export class VentaController {
         // Cargar monturas disponibles para el select
         const monturas = await MonturaModel.getAll();
         this.view.populateMonturasSelect(monturas);
+
+        // Cargar vendedoras (usuarios)
+        const vendedoras = await this.usersModel.getAll();
+        this.view.populateVendedorasSelect(vendedoras);
+
+        // Cargar clientes (HU01)
+        const clientes = await ClientModel.getAll();
+        this.view.populateClientesSelect(clientes);
     }
 
     async handleEditClick(id) {
@@ -57,6 +71,13 @@ export class VentaController {
         if (venta) {
             const monturas = await MonturaModel.getAll();
             this.view.populateMonturasSelect(monturas);
+            
+            const vendedoras = await this.usersModel.getAll();
+            this.view.populateVendedorasSelect(vendedoras);
+            
+            const clientes = await ClientModel.getAll();
+            this.view.populateClientesSelect(clientes);
+
             this.view.openModal(true);
             this.view.populateForm(venta);
         }
@@ -89,20 +110,66 @@ export class VentaController {
     }
 
     async handleDeleteClick(id) {
-        const confirm = await UIHelper.showCustomConfirm('¿Estás seguro de eliminar este registro de venta?', { 
+        const confirm = await UIHelper.showCustomConfirm('¿Estás seguro de eliminar este registro de venta? El stock de la montura será devuelto automáticamente.', { 
             title: 'ELIMINAR VENTA', 
-            confirmText: 'Eliminar', 
+            confirmText: 'Eliminar y Reponer Stock', 
             isDanger: true 
         });
         
         if (confirm) {
             try {
+                // 1. Obtener datos de la venta antes de borrarla para saber qué montura reponer
+                const venta = await VentaModel.getById(id);
+                
+                if (venta && venta.montura_id) {
+                    // 2. Reponer el stock (+1)
+                    await MonturaModel.updateStock(venta.montura_id, 1);
+                    console.log(`Stock repuesto para montura: ${venta.montura_id}`);
+                }
+
+                // 3. Eliminar la venta
                 await VentaModel.delete(id);
+                
+                // 4. Refrescar tablas
                 await this.render();
+                
+                // Refrescar catálogo de monturas si el controlador existe
+                if (window.app && window.app.monturaController) {
+                    window.app.monturaController.render();
+                }
+
+                UIHelper.showCustomAlert('Venta eliminada y stock actualizado.', 'SUCCESS');
             } catch (error) {
                 console.error('Error al eliminar venta:', error);
                 UIHelper.showCustomAlert('Error al eliminar venta', 'ERROR');
             }
         }
+    }
+
+    /**
+     * Busca cliente por DNI y autocompleta (HU01)
+     */
+    async handleDniSearch(dni) {
+        try {
+            const client = await ClientModel.getByDni(dni);
+            if (client) {
+                this.view.nameInput.value = client.nombre;
+            } else {
+                UIHelper.showCustomAlert('Cliente no encontrado. Haz clic en "+" para registrarlo.', 'INFO');
+                this.view.nameInput.value = "";
+            }
+        } catch (error) {
+            console.error("Error buscando DNI:", error);
+        }
+    }
+
+    /**
+     * Abre el modal de clientes desde ventas
+     */
+    handleQuickAddClient() {
+        // Obtenemos la instancia de ClientController a través de AppController si es necesario, 
+        // o simplemente disparamos el evento del botón de nuevo cliente.
+        const btnOpenClient = document.getElementById('btnOpenClientModal');
+        if (btnOpenClient) btnOpenClient.click();
     }
 }
