@@ -2,6 +2,7 @@ import { VentaModel } from '../models/VentaModel.js';
 import { MonturaModel } from '../models/MonturaModel.js';
 import { UsersModel } from '../models/UsersModel.js';
 import { ClientModel } from '../models/ClientModel.js';
+import { DoctorModel } from '../models/DoctorModel.js';
 import { VentaView } from '../views/VentaView.js';
 import { UIHelper } from '../views/UIHelper.js';
 
@@ -17,11 +18,18 @@ export class VentaController {
         this.view.bindAddVenta(this.handleAddVentaClick.bind(this));
         this.view.bindCloseModal();
         this.view.bindSubmitForm(this.handleFormSubmit.bind(this));
-        this.view.bindTableActions(this.handleEditClick.bind(this), this.handleDeleteClick.bind(this));
+        this.view.bindTableActions(
+            this.handleEditClick.bind(this),
+            this.handleDeleteClick.bind(this),
+            this.handleAbonoClick.bind(this),
+            this.handlePrintClick.bind(this)
+        );
         this.view.bindSearch();
         this.view.bindMonturaSelect();
         this.view.bindDniSearch(this.handleDniSearch.bind(this));
         this.view.bindQuickAddClient(this.handleQuickAddClient.bind(this));
+        this.view.bindDateFilter(this.handleDateFilter.bind(this));
+        this.view.bindPagoFormSubmit(this.handlePagoSubmit.bind(this));
 
         // Cargar datos iniciales
         this.init();
@@ -56,6 +64,10 @@ export class VentaController {
         const vendedoras = await this.usersModel.getAll();
         this.view.populateVendedorasSelect(vendedoras);
 
+        // Cargar doctores (HU08)
+        const doctores = await DoctorModel.getAll();
+        this.view.populateDoctoresSelect(doctores);
+
         // Cargar clientes (HU01)
         const clientes = await ClientModel.getAll();
         this.view.populateClientesSelect(clientes);
@@ -74,6 +86,9 @@ export class VentaController {
             
             const vendedoras = await this.usersModel.getAll();
             this.view.populateVendedorasSelect(vendedoras);
+
+            const doctores = await DoctorModel.getAll();
+            this.view.populateDoctoresSelect(doctores);
             
             const clientes = await ClientModel.getAll();
             this.view.populateClientesSelect(clientes);
@@ -98,10 +113,18 @@ export class VentaController {
                         await MonturaModel.update(montura.id, montura);
                     }
                 }
+                // HU08: Incrementar consultas del doctor y sumar egreso
+                if (formData.doctor_id) {
+                    await DoctorModel.incrementarConsulta(formData.doctor_id);
+                }
             }
 
             this.view.closeModal();
-            await this.render();
+            if (window.app) {
+                window.app.triggerGlobalRefresh();
+            } else {
+                await this.render();
+            }
             UIHelper.showCustomAlert('Venta registrada con éxito.', 'ÉXITO');
         } catch (error) {
             console.error('Error al registrar venta:', error);
@@ -130,12 +153,11 @@ export class VentaController {
                 // 3. Eliminar la venta
                 await VentaModel.delete(id);
                 
-                // 4. Refrescar tablas
-                await this.render();
-                
-                // Refrescar catálogo de monturas si el controlador existe
-                if (window.app && window.app.monturaController) {
-                    window.app.monturaController.render();
+                // 4. Refrescar de forma global en tiempo real
+                if (window.app) {
+                    window.app.triggerGlobalRefresh();
+                } else {
+                    await this.render();
                 }
 
                 UIHelper.showCustomAlert('Venta eliminada y stock actualizado.', 'SUCCESS');
@@ -171,5 +193,88 @@ export class VentaController {
         // o simplemente disparamos el evento del botón de nuevo cliente.
         const btnOpenClient = document.getElementById('btnOpenClientModal');
         if (btnOpenClient) btnOpenClient.click();
+    }
+
+    /**
+     * HU03: Abre el modal para registrar un abono/pago parcial a una venta pendiente
+     */
+    async handleAbonoClick(id) {
+        try {
+            const venta = await VentaModel.getById(id);
+            if (!venta) return;
+            this.view.openPagoModal(venta);
+        } catch (error) {
+            console.error('Error al abrir abono modal:', error);
+            UIHelper.showCustomAlert('Error al cargar datos del abono.', 'ERROR');
+        }
+    }
+
+    async handlePrintClick(id) {
+        try {
+            const venta = await VentaModel.getById(id);
+            if (!venta) return;
+            this.view.openPrintModal(venta);
+        } catch (error) {
+            console.error('Error al abrir modal de impresión:', error);
+            UIHelper.showCustomAlert('Error al cargar datos del comprobante.', 'ERROR');
+        }
+    }
+
+    /**
+     * HU03: Procesa el formulario de abono y actualiza saldo/estados/cuadres
+     */
+    async handlePagoSubmit(id, abono) {
+        try {
+            const venta = await VentaModel.getById(id);
+            if (!venta) return;
+
+            const saldo = parseFloat(venta.saldo) || 0;
+            if (isNaN(abono) || abono <= 0) {
+                UIHelper.showCustomAlert('El monto ingresado no es válido.', 'ERROR');
+                return;
+            }
+
+            if (abono > saldo) {
+                UIHelper.showCustomAlert('El abono no puede ser mayor que el saldo pendiente.', 'ERROR');
+                return;
+            }
+
+            await VentaModel.registrarAbono(id, abono);
+            
+            // Cerrar el modal
+            this.view.closePagoModal();
+            
+            // Refrescar de forma global en tiempo real
+            if (window.app) {
+                window.app.triggerGlobalRefresh();
+            } else {
+                await this.render();
+            }
+
+            UIHelper.showCustomAlert('Abono registrado con éxito.', 'ÉXITO');
+        } catch (error) {
+            console.error('Error al registrar abono:', error);
+            UIHelper.showCustomAlert('Error al registrar abono: ' + error.message, 'ERROR');
+        }
+    }
+
+    /**
+     * HU04: Filtra el listado de ventas por rango de fechas
+     */
+    async handleDateFilter(desde, hasta) {
+        try {
+            let ventas = await VentaModel.getAll();
+            if (desde) {
+                ventas = ventas.filter(v => v.fecha >= desde);
+            }
+            if (hasta) {
+                ventas = ventas.filter(v => v.fecha <= hasta);
+            }
+            const rawRole = (window.app && window.app.getRole()) ? window.app.getRole() : 'vendedora';
+            const role = rawRole.toLowerCase().includes('admin') ? 'admin' : 'vendedora';
+            this.view.renderTable(ventas, role);
+        } catch (error) {
+            console.error('Error al filtrar ventas por fecha:', error);
+        }
     }
 }

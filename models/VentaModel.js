@@ -48,9 +48,14 @@ export class VentaModel {
     }
 
     /**
-     * Registra una nueva venta
+     * Registra una nueva venta (HU03: incluye a_cuenta, saldo y estado)
      */
     static async create(venta) {
+        const aCuenta = parseFloat(venta.a_cuenta) || 0;
+        const total = parseFloat(venta.monto_total) || 0;
+        const saldo = Math.max(0, total - aCuenta);
+        const estado = saldo === 0 ? 'CANCELADO' : 'PENDIENTE';
+
         const { error } = await supabase
             .from('ventas')
             .insert([{
@@ -58,19 +63,27 @@ export class VentaModel {
                 nombre_cliente: venta.nombre_cliente,
                 fecha: venta.fecha,
                 datos_compra: venta.datos_compra,
-                monto_total: venta.monto_total,
-                estado: 'CANCELADO',
+                monto_total: total,
+                a_cuenta: aCuenta,
+                saldo: saldo,
+                estado: estado,
                 modalidad_pago: venta.modalidad_pago,
-                montura_id: venta.montura_id
+                montura_id: venta.montura_id,
+                doctor_id: venta.doctor_id || null
             }]);
             
         if (error) throw error;
     }
     
     /**
-     * Actualiza una venta existente
+     * Actualiza una venta existente (HU03: recalcula saldo y estado)
      */
     static async update(id, venta) {
+        const aCuenta = parseFloat(venta.a_cuenta) || 0;
+        const total = parseFloat(venta.monto_total) || 0;
+        const saldo = Math.max(0, total - aCuenta);
+        const estado = saldo === 0 ? 'CANCELADO' : 'PENDIENTE';
+
         const { error } = await supabase
             .from('ventas')
             .update({
@@ -78,13 +91,42 @@ export class VentaModel {
                 nombre_cliente: venta.nombre_cliente,
                 fecha: venta.fecha,
                 datos_compra: venta.datos_compra,
-                monto_total: venta.monto_total,
+                monto_total: total,
+                a_cuenta: aCuenta,
+                saldo: saldo,
+                estado: estado,
                 modalidad_pago: venta.modalidad_pago,
-                montura_id: venta.montura_id
+                montura_id: venta.montura_id,
+                doctor_id: venta.doctor_id || null
             })
             .eq('id', id);
             
         if (error) throw error;
+    }
+
+    /**
+     * HU03: Registra un abono a una venta existente
+     */
+    static async registrarAbono(id, abono) {
+        const venta = await this.getById(id);
+        if (!venta) throw new Error('Venta no encontrada');
+
+        const nuevoACuenta = (parseFloat(venta.a_cuenta) || 0) + parseFloat(abono);
+        const total = parseFloat(venta.monto_total) || 0;
+        const nuevoSaldo = Math.max(0, total - nuevoACuenta);
+        const nuevoEstado = nuevoSaldo === 0 ? 'CANCELADO' : 'PENDIENTE';
+
+        const { error } = await supabase
+            .from('ventas')
+            .update({
+                a_cuenta: nuevoACuenta,
+                saldo: nuevoSaldo,
+                estado: nuevoEstado
+            })
+            .eq('id', id);
+
+        if (error) throw error;
+        return { saldo: nuevoSaldo, estado: nuevoEstado };
     }
     
     /**

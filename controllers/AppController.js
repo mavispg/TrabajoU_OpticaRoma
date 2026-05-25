@@ -5,6 +5,9 @@ import { UsersController } from './UsersController.js';
 import { ClientController } from './ClientController.js';
 import { LabController } from './LabController.js';
 import { DashboardController } from './DashboardController.js';
+import { GastoController } from './GastoController.js';
+import { DoctorController } from './DoctorController.js';
+import { CuadreController } from './CuadreController.js';
 
 export class AppController {
     constructor() {
@@ -17,6 +20,9 @@ export class AppController {
         this.clientController = new ClientController();
         this.labController = new LabController();
         this.dashboardController = new DashboardController();
+        this.gastoController = new GastoController();
+        this.doctorController = new DoctorController();
+        this.cuadreController = new CuadreController();
 
         this.initNavigation();
         this.initSidebar();
@@ -27,6 +33,22 @@ export class AppController {
         // Refrescar controladores cuando la sesión esté lista
         if (this.monturaController) this.monturaController.render();
         if (this.ventaController) this.ventaController.render();
+        if (this.gastoController) this.gastoController.render();
+        if (this.doctorController) this.doctorController.render();
+        if (this.cuadreController) this.cuadreController.handleGenerar();
+        if (this.dashboardController) this.dashboardController.render();
+    }
+
+    /**
+     * Sincroniza en tiempo real todos los módulos de la aplicación cuando hay algún cambio (venta, gasto, pago, etc.)
+     */
+    triggerGlobalRefresh() {
+        if (this.monturaController) this.monturaController.render();
+        if (this.ventaController) this.ventaController.render();
+        if (this.gastoController) this.gastoController.render();
+        if (this.doctorController) this.doctorController.render();
+        if (this.cuadreController) this.cuadreController.handleGenerar();
+        if (this.dashboardController) this.dashboardController.render();
     }
 
     getRole() {

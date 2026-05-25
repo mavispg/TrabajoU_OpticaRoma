@@ -1,6 +1,6 @@
 export class UIHelper {
     static formatCurrency(value) {
-        if (!value) return '';
+        if (value === null || value === undefined || value === '') return '';
         let numberVal = parseFloat(value.toString().replace(/[^0-9.-]+/g,""));
         if (isNaN(numberVal)) return value;
         return "S/. " + numberVal.toFixed(2);

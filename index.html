@@ -10,6 +10,34 @@
     <link rel="icon" type="image/png" href="img/favicon.png">
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* Estilos específicos para la impresión térmica del ticket */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #ticketContainer, #ticketContainer * {
+                visibility: visible;
+            }
+            #ticketContainer {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 78mm;
+                border: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: white !important;
+                font-family: 'Courier New', Courier, monospace !important;
+                color: #000 !important;
+            }
+            #ticketContainer {
+                max-height: none !important;
+                overflow: visible !important;
+            }
+        }
+    </style>
 </head>
 <body>
     
@@ -84,6 +112,27 @@
                     <a href="#" class="nav-link" data-target="clients">
                         <i class='bx bx-id-card'></i>
                         <span class="links_name">VENTAS</span>
+                    </a>
+                </li>
+
+                <li id="menu-gastos">
+                    <a href="#" class="nav-link" data-target="gastos">
+                        <i class='bx bx-wallet'></i>
+                        <span class="links_name">GASTOS</span>
+                    </a>
+                </li>
+
+                <li id="menu-cuadre" style="display: none;">
+                    <a href="#" class="nav-link" data-target="cuadre">
+                        <i class='bx bx-calculator'></i>
+                        <span class="links_name">CUADRE DE CAJA</span>
+                    </a>
+                </li>
+
+                <li id="menu-doctores" style="display: none;">
+                    <a href="#" class="nav-link" data-target="doctores">
+                        <i class='bx bx-plus-medical'></i>
+                        <span class="links_name">DOCTORES</span>
                     </a>
                 </li>
 
@@ -266,10 +315,19 @@
             <div id="clients" class="content-section">
                 <h1 class="page-title">Gestión</h1>
                 <h2 class="page-subtitle">ÓRDENES DE VENTA</h2>
-                <div class="controls-bar">
-                    <div class="search-input-wrapper">
-                        <i class='bx bx-search'></i>
-                        <input type="text" id="searchClientsInput" placeholder="Buscar venta por cliente o código...">
+                <div class="controls-bar" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center; flex: 1;">
+                        <div class="search-input-wrapper" style="min-width: 250px; flex: 1; max-width: 350px;">
+                            <i class='bx bx-search'></i>
+                            <input type="text" id="searchClientsInput" placeholder="Buscar venta por cliente o código...">
+                        </div>
+                        <div class="date-filter-group" style="display: flex; align-items: center; gap: 10px; background: white; padding: 6px 15px; border-radius: 10px; border: 1.5px solid #d1d8e0; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                            <label style="font-size: 12px; font-weight: 600; color: #666;">Desde:</label>
+                            <input type="date" id="c_filter_desde" style="border: none; outline: none; font-size: 13px; color: #333;">
+                            <label style="font-size: 12px; font-weight: 600; color: #666;">Hasta:</label>
+                            <input type="date" id="c_filter_hasta" style="border: none; outline: none; font-size: 13px; color: #333;">
+                            <button id="btnFiltrarVentas" class="btn-green" style="padding: 5px 12px; border-radius: 8px; font-size: 12px; height: 30px; display: flex; align-items: center; gap: 5px;"><i class='bx bx-filter-alt'></i> Filtrar</button>
+                        </div>
                     </div>
                     <div class="actions-group">
                         <button class="btn-green" id="btnAddClient"><i class='bx bx-plus'></i> Nueva Venta</button>
@@ -286,6 +344,160 @@
                                 <th style="width: 12%;">Total</th>
                                 <th style="width: 12%;">Estado</th>
                                 <th style="width: 12%; text-align: right;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Se llena por MVC -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MÓDULO DE GASTOS (HU07) -->
+            <div id="gastos" class="content-section">
+                <h1 class="page-title">Gestión</h1>
+                <h2 class="page-subtitle">GASTOS OPERATIVOS</h2>
+                <div class="controls-bar">
+                    <div class="search-input-wrapper">
+                        <i class='bx bx-search'></i>
+                        <input type="text" id="searchGastosInput" placeholder="Buscar gasto...">
+                    </div>
+                    <div class="actions-group">
+                        <button class="btn-green" id="btnAddGasto"><i class='bx bx-plus'></i> Nuevo Gasto</button>
+                    </div>
+                </div>
+                <div class="white-box">
+                    <table class="custom-table" id="gastosTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 15%;">Código</th>
+                                <th style="width: 15%;">Fecha</th>
+                                <th style="width: 20%;">Categoría</th>
+                                <th>Descripción</th>
+                                <th style="width: 15%;">Monto</th>
+                                <th style="width: 15%; text-align: right;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Se llena por MVC -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MÓDULO DE CUADRE DE CAJA (HU09) -->
+            <div id="cuadre" class="content-section">
+                <h1 class="page-title">Control Financiero</h1>
+                <h2 class="page-subtitle">CUADRE DE CAJA DIARIO</h2>
+                
+                <div class="controls-bar" style="display: flex; gap: 15px; align-items: center; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class='bx bx-calendar' style="font-size: 24px; color: #2e61b3;"></i>
+                        <label style="font-weight: 600; color: #2c3e50;">Seleccione Fecha:</label>
+                        <input type="date" id="cuadre_fecha" style="padding: 8px 12px; border: 1.5px solid #d1d8e0; border-radius: 8px; font-size: 14px; outline: none; transition: 0.3s;">
+                    </div>
+                    <button class="btn-green" id="btnGenerarCuadre" style="height: 38px; padding: 0 20px; font-weight: 600; display: flex; align-items: center; gap: 8px;"><i class='bx bx-refresh'></i> Generar Cuadre</button>
+                </div>
+
+                <div style="margin-bottom: 20px; text-align: center;">
+                    <h3 id="cuadre-fecha-display" style="font-size: 20px; color: #2c3e50; font-weight: 700;">—</h3>
+                </div>
+
+                <!-- KPI Cards Row -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 25px;">
+                    <div class="stat-card" style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid #2ecc71;">
+                        <p style="font-size: 14px; color: #7f8c8d; font-weight: 500;">Ingresos Totales (Ventas)</p>
+                        <h3 id="cuadre-total-ingresos" style="font-size: 28px; margin-top: 5px; color: #2ecc71; font-weight: 700;">S/. 0.00</h3>
+                    </div>
+                    <div class="stat-card" style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid #e74c3c;">
+                        <p style="font-size: 14px; color: #7f8c8d; font-weight: 500;">Egresos Totales (Gastos)</p>
+                        <h3 id="cuadre-total-gastos" style="font-size: 28px; margin-top: 5px; color: #e74c3c; font-weight: 700;">S/. 0.00</h3>
+                    </div>
+                    <div class="stat-card" style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid #2e61b3;">
+                        <p style="font-size: 14px; color: #7f8c8d; font-weight: 500;">Flujo de Caja Neto (Utilidad)</p>
+                        <h3 id="cuadre-saldo-neto" style="font-size: 28px; margin-top: 5px; color: #2e61b3; font-weight: 700;">S/. 0.00</h3>
+                    </div>
+                </div>
+
+                <!-- Desglose de ingresos por método de pago -->
+                <div class="white-box" style="padding: 20px; border-radius: 15px; margin-bottom: 25px;">
+                    <h3 style="font-size: 16px; color: #2c3e50; margin-bottom: 15px; font-weight: 600; border-bottom: 1px solid #eee; padding-bottom: 8px;"><i class='bx bx-credit-card-front' style="color:#2e61b3;"></i> DESGLOSE POR MODALIDAD DE PAGO</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div style="background:#f8f9fa; padding:15px; border-radius:10px; text-align:center;">
+                            <p style="font-size:12px; color:#7f8c8d; font-weight:500;">EFECTIVO</p>
+                            <h4 id="cuadre-efectivo" style="font-size:20px; color:#2c3e50; font-weight:700; margin-top:5px;">S/. 0.00</h4>
+                        </div>
+                        <div style="background:#f8f9fa; padding:15px; border-radius:10px; text-align:center;">
+                            <p style="font-size:12px; color:#7f8c8d; font-weight:500;">YAPE</p>
+                            <h4 id="cuadre-yape" style="font-size:20px; color:#2c3e50; font-weight:700; margin-top:5px;">S/. 0.00</h4>
+                        </div>
+                        <div style="background:#f8f9fa; padding:15px; border-radius:10px; text-align:center;">
+                            <p style="font-size:12px; color:#7f8c8d; font-weight:500;">VISA</p>
+                            <h4 id="cuadre-visa" style="font-size:20px; color:#2c3e50; font-weight:700; margin-top:5px;">S/. 0.00</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detalle de Transacciones (Ingresos vs Egresos) -->
+                <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px;">
+                    <div class="white-box" style="padding: 20px; border-radius: 15px;">
+                        <h3 style="font-size: 16px; color: #2c3e50; margin-bottom: 15px; font-weight: 600;"><i class='bx bx-trending-up' style="color:#2ecc71;"></i> Detalle de Ingresos (Abonos)</h3>
+                        <table class="custom-table" id="cuadreVentasTable">
+                            <thead>
+                                <tr>
+                                    <th>Cód. Venta</th>
+                                    <th>Cliente</th>
+                                    <th>Monto Total</th>
+                                    <th>Abono/Ingreso</th>
+                                    <th>Modalidad</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Se llena por MVC -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="white-box" style="padding: 20px; border-radius: 15px;">
+                        <h3 style="font-size: 16px; color: #2c3e50; margin-bottom: 15px; font-weight: 600;"><i class='bx bx-trending-down' style="color:#e74c3c;"></i> Detalle de Egresos (Gastos)</h3>
+                        <table class="custom-table" id="cuadreGastosTable">
+                            <thead>
+                                <tr>
+                                    <th>Categoría / Detalle</th>
+                                    <th>Egreso</th>
+                                    <th>Modalidad</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Se llena por MVC -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MÓDULO DE DOCTORES (HU08) -->
+            <div id="doctores" class="content-section">
+                <h1 class="page-title">Gestión</h1>
+                <h2 class="page-subtitle">DOCTORES Y LIQUIDACIONES</h2>
+                <div class="controls-bar">
+                    <div class="search-input-wrapper">
+                        <i class='bx bx-search'></i>
+                        <input type="text" id="searchDoctoresInput" placeholder="Buscar doctor...">
+                    </div>
+                    <div class="actions-group">
+                        <button class="btn-green" id="btnAddDoctor"><i class='bx bx-plus'></i> Nuevo Doctor</button>
+                    </div>
+                </div>
+                <div class="white-box">
+                    <table class="custom-table" id="doctoresTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 10%;">Código</th>
+                                <th style="width: 22%;">Nombre del Doctor</th>
+                                <th>Especialidad / Centro</th>
+                                <th style="width: 12%; text-align: center;">Consultas</th>
+                                <th style="width: 20%;">Liquidación (Total / Pendiente)</th>
+                                <th style="width: 13%; text-align: right;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -415,19 +627,29 @@
 
                 <h3 style="margin-top: 15px; margin-bottom: 10px; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Detalle de Compra</h3>
                 
-                <div class="form-group">
-                    <label>Montura Seleccionada:</label>
-                    <select id="sel_montura_pivot">
-                        <option value="">Seleccione una Montura...</option>
-                        <!-- Cargado por JS -->
-                    </select>
+                <div class="form-row">
+                    <div class="form-group" style="width: 70%;">
+                        <label>Montura Seleccionada:</label>
+                        <select id="sel_montura_pivot">
+                            <option value="">Seleccione una Montura...</option>
+                            <!-- Cargado por JS -->
+                        </select>
+                    </div>
+                    <div class="form-group" style="width: 30%;">
+                        <label>Precio Montura (S/.):</label>
+                        <input type="number" step="0.01" id="c_precio_montura" value="0">
+                    </div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group" style="width: 50%;">
+                    <div class="form-group" style="width: 40%;">
                         <label>Tipo de Lunas:</label>
                         <input type="text" id="c_lunas" placeholder="Ej: Antirreflex, Multifocal">
                     </div>
-                    <div class="form-group" style="width: 50%;">
+                    <div class="form-group" style="width: 30%;">
+                        <label>Precio Lunas (S/.):</label>
+                        <input type="number" step="0.01" id="c_precio_luna" value="0">
+                    </div>
+                    <div class="form-group" style="width: 30%;">
                         <label>Laboratorio (Proveedor):</label>
                         <div style="display: flex; gap: 5px;">
                             <select id="sel_lab">
@@ -453,14 +675,33 @@
                         <!-- Cargado por JS -->
                     </select>
                 </div>
+                <div class="form-row">
+                    <div class="form-group" style="width: 100%;">
+                        <label>Doctor Referente (Consulta):</label>
+                        <select id="sel_doctor">
+                            <option value="">Ninguno (Venta Directa)</option>
+                            <!-- Cargado por JS -->
+                        </select>
+                    </div>
+                </div>
                 
                 <h3 style="margin-top: 15px; margin-bottom: 10px; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Pago</h3>
                 <div class="form-row">
-                    <div class="form-group" style="width: 50%;">
+                    <div class="form-group" style="width: 33%;">
                         <label>Monto Total (S/.):</label>
                         <input type="number" step="0.01" id="c_total" required min="0" value="0">
                     </div>
-                    <div class="form-group" style="width: 50%;">
+                    <div class="form-group" style="width: 33%;">
+                        <label>A Cuenta (S/.):</label>
+                        <input type="number" step="0.01" id="c_a_cuenta" required min="0" value="0">
+                    </div>
+                    <div class="form-group" style="width: 34%;">
+                        <label>Saldo Restante (S/.):</label>
+                        <input type="number" step="0.01" id="c_saldo" readonly value="0" style="background-color: #f1f1f1; font-weight: bold; color: #2c3e50;">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="width: 100%;">
                         <label>Método de Pago:</label>
                         <select id="split_method_1">
                             <option value="EFECTIVO">EFECTIVO</option>
@@ -562,6 +803,167 @@
             <div id="historyList" style="margin-top: 20px; max-height: 400px; overflow-y: auto;">
                 <!-- Se llena por JS -->
                 <p>Cargando historial...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL AGREGAR GASTO (HU07) -->
+    <div id="addGastoModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close-btn gasto-close">&times;</span>
+            <h2>Registrar Nuevo Gasto</h2>
+            <form id="addGastoForm">
+                <div class="form-row">
+                    <div class="form-group" style="width: 40%;">
+                        <label>Código Gasto:</label>
+                        <input type="text" id="g_id" required readonly style="background-color: #f1f1f1;">
+                    </div>
+                    <div class="form-group" style="width: 60%;">
+                        <label>Fecha:</label>
+                        <input type="date" id="g_fecha" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Categoría del Gasto:</label>
+                    <select id="g_categoria" required>
+                        <option value="LOCAL">Servicios (Agua/Luz/Internet)</option>
+                        <option value="ALQUILER">Alquiler del Local</option>
+                        <option value="SUMINISTROS">Suministros/Materiales</option>
+                        <option value="MARKETING">Marketing/Publicidad</option>
+                        <option value="PLANILLA">Planilla/Sueldos</option>
+                        <option value="IMPUESTOS">Impuestos</option>
+                        <option value="OTROS">Otros Gastos</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Descripción / Detalle:</label>
+                    <input type="text" id="g_descripcion" placeholder="Ej: Pago de recibo de luz Marzo">
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="width: 50%;">
+                        <label>Monto (S/.):</label>
+                        <input type="number" step="0.01" id="g_monto" required min="0.01">
+                    </div>
+                    <div class="form-group" style="width: 50%;">
+                        <label>Modalidad de Pago:</label>
+                        <select id="g_metodo_pago" required>
+                            <option value="EFECTIVO">EFECTIVO</option>
+                            <option value="YAPE">YAPE</option>
+                            <option value="VISA">VISA</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="submit-btn" style="margin-top: 15px;">Guardar Gasto</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL AGREGAR DOCTOR (HU08) -->
+    <div id="addDoctorModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close-btn doctor-close">&times;</span>
+            <h2>Registrar Nuevo Doctor</h2>
+            <form id="addDoctorForm">
+                <div class="form-row">
+                    <div class="form-group" style="width: 30%;">
+                        <label>Cód. Doc:</label>
+                        <input type="text" id="doc_id" required readonly style="background-color: #f1f1f1;">
+                    </div>
+                    <div class="form-group" style="width: 70%;">
+                        <label>Nombre del Doctor:</label>
+                        <input type="text" id="doc_nombre" required placeholder="Ej: Dr. Carlos Mendoza">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Especialidad / Centro Clínico:</label>
+                    <input type="text" id="doc_especialidad" placeholder="Ej: Oftalmología / Hospital Rebagliati">
+                </div>
+                <div style="background: #f0f9f0; border: 1.5px solid #2ecc71; border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; font-size: 13px; color: #27ae60;">
+                    <i class='bx bx-info-circle'></i>
+                    <strong>Las consultas se acumulan automáticamente</strong> cada vez que se registra una venta vinculada a este doctor (S/. 20 por consulta).
+                </div>
+                <button type="submit" class="submit-btn" style="margin-top: 5px;">Guardar Doctor</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL REGISTRAR PAGO A DOCTOR (HU08) -->
+    <div id="pagoDocModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <span class="close-btn pago-doc-close">&times;</span>
+            <h2>Registrar Pago a Doctor</h2>
+            <form id="pagoDocForm">
+                <input type="hidden" id="pago_doc_id">
+                <div class="form-group">
+                    <label>Monto a Pagar (S/.):</label>
+                    <input type="number" step="0.01" id="pago_doc_monto" required min="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Modalidad de Pago:</label>
+                    <select id="pago_doc_modalidad" required>
+                        <option value="EFECTIVO">EFECTIVO</option>
+                        <option value="YAPE">YAPE</option>
+                    </select>
+                </div>
+                <button type="submit" class="submit-btn" style="margin-top: 15px;">Registrar Pago</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL REGISTRAR ABONO A VENTA (HU03) -->
+    <div id="pagoVentaModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <span class="close-btn pago-venta-close">&times;</span>
+            <h2 style="color: #2e61b3; border-bottom: 2px solid #2e61b3; padding-bottom: 10px; margin-bottom: 15px;">Registrar Abono</h2>
+            <form id="pagoVentaForm">
+                <input type="hidden" id="pago_venta_id">
+                <div style="background: #f8fbff; border: 1.5px dashed #2e61b3; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+                    <p style="font-size: 13px; color: #666; font-weight: 500;">Venta: <strong id="pago_venta_codigo" style="color:#2e61b3;">—</strong></p>
+                    <p style="font-size: 14px; color: #333; margin-top: 5px; font-weight: 600;">Saldo Pendiente: <span id="pago_venta_saldo" style="color:#e74c3c;">S/. 0.00</span></p>
+                </div>
+                <div class="form-group">
+                    <label>Monto a Abonar (S/.):</label>
+                    <input type="number" step="0.01" id="pago_venta_monto" required min="0.01" style="font-size: 16px; font-weight: bold; text-align: center;">
+                </div>
+                <button type="submit" class="submit-btn" style="margin-top: 15px; font-weight: 600;">Confirmar Abono</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE PREVIEW E IMPRESIÓN DE TICKET (BOLETA / FACTURA) (HU09) -->
+    <div id="ticketPrintModal" class="modal">
+        <div class="modal-content" style="max-width: 480px; padding: 20px; border-radius: 12px; background: #fff; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+            <span class="close-btn ticket-print-close">&times;</span>
+            <h2 style="color: #2e61b3; border-bottom: 2px solid #2e61b3; padding-bottom: 8px; margin-bottom: 15px; font-weight: bold; font-size: 18px; display: flex; align-items: center; gap: 8px;">
+                <i class='bx bx-receipt'></i> Generar Comprobante
+            </h2>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <button id="btnSelectBoleta" class="submit-btn" style="background: #2e61b3; flex: 1; font-size: 13px; font-weight: 600; padding: 8px 12px;">BOLETA ELECTRÓNICA</button>
+                <button id="btnSelectFactura" class="submit-btn" style="background: #aaa; flex: 1; font-size: 13px; font-weight: 600; padding: 8px 12px;">FACTURA ELECTRÓNICA</button>
+            </div>
+
+            <!-- Campos Dinámicos para Factura -->
+            <div id="docInputs" style="background: #f8fbff; border: 1px solid #d4e3fc; padding: 12px; border-radius: 8px; margin-bottom: 15px; display: none;">
+                <div class="form-group" style="margin-bottom: 8px;">
+                    <label style="font-size: 11px; font-weight: 600; color: #555; display: block; margin-bottom: 4px;">RUC de la Empresa Cliente:</label>
+                    <input type="text" id="ticket_client_ruc" placeholder="Ej: 20100100100" style="padding: 6px; font-size: 13px; width: 100%; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="font-size: 11px; font-weight: 600; color: #555; display: block; margin-bottom: 4px;">Razón Social / Nombre Comercial:</label>
+                    <input type="text" id="ticket_client_rs" placeholder="Ej: Hydra Company S.A.C." style="padding: 6px; font-size: 13px; width: 100%; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+            </div>
+
+            <!-- Contenedor del Ticket (Impresión Física) -->
+            <div id="ticketContainer" style="border: 1px solid #ddd; padding: 15px; border-radius: 8px; background: #fff; max-height: 400px; overflow-y: auto; font-family: 'Courier New', Courier, monospace; color: #000; font-size: 12px; line-height: 1.3; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);">
+                <!-- Aquí se inyecta la boleta dinámicamente -->
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button id="btnImprimirTicket" class="submit-btn" style="background: #27ae60; flex: 1; font-weight: bold; padding: 10px; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class='bx bx-printer' style="font-size: 18px;"></i> IMPRIMIR COMPROBANTE
+                </button>
             </div>
         </div>
     </div>

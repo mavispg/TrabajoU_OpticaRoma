@@ -14,6 +14,9 @@ export class AuthView {
             home: document.getElementById('menu-home'),
             monturas: document.getElementById('menu-monturas'),
             ventas: document.getElementById('menu-ventas'),
+            gastos: document.getElementById('menu-gastos'),
+            cuadre: document.getElementById('menu-cuadre'),
+            doctores: document.getElementById('menu-doctores'),
             users: document.getElementById('menu-users')
         };
         this.userRoleDisplay = document.getElementById('userRoleDisplay');
@@ -42,19 +45,23 @@ export class AuthView {
                 if(this.navItems.home) this.navItems.home.style.display = 'block';
                 if(this.navItems.monturas) this.navItems.monturas.style.display = 'block';
                 if(this.navItems.ventas) this.navItems.ventas.style.display = 'block';
+                if(this.navItems.gastos) this.navItems.gastos.style.display = 'block';
+                if(this.navItems.cuadre) this.navItems.cuadre.style.display = 'block';
+                if(this.navItems.doctores) this.navItems.doctores.style.display = 'block';
                 if(this.navItems.users) this.navItems.users.style.display = 'block';
-                
-                // Por defecto ir a Inicio o lo que estaba
             } else if (role === 'vendedora') {
-                // La vendedora ve todo menos Usuarios
+                // La vendedora ve home, monturas, ventas, gastos, y NO ve cuadre, doctores, ni usuarios
                 if(this.navItems.home) this.navItems.home.style.display = 'block';
                 if(this.navItems.monturas) this.navItems.monturas.style.display = 'block';
                 if(this.navItems.ventas) this.navItems.ventas.style.display = 'block';
+                if(this.navItems.gastos) this.navItems.gastos.style.display = 'block';
+                if(this.navItems.cuadre) this.navItems.cuadre.style.display = 'none';
+                if(this.navItems.doctores) this.navItems.doctores.style.display = 'none';
                 if(this.navItems.users) this.navItems.users.style.display = 'none';
                 
-                // Forzar ir a Inicio si estaba en usuarios
+                // Forzar ir a Inicio si estaba en una sección no autorizada
                 const currentActive = document.querySelector('.nav-link.active');
-                if (currentActive && currentActive.getAttribute('data-target') === 'users') {
+                if (currentActive && ['users', 'cuadre', 'doctores'].includes(currentActive.getAttribute('data-target'))) {
                     const homeLink = this.navItems.home.querySelector('a');
                     if(homeLink) homeLink.click();
                 }
