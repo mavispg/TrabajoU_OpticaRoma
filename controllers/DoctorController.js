@@ -31,7 +31,9 @@ export class DoctorController {
     async render() {
         try {
             const doctores = await DoctorModel.getAll();
-            this.view.renderTable(doctores);
+            const rawRole = (window.app && window.app.getRole()) ? window.app.getRole() : 'vendedora';
+            const role = rawRole.toLowerCase().includes('admin') ? 'admin' : 'vendedora';
+            this.view.renderTable(doctores, role);
         } catch (e) {
             console.error('Error al renderizar doctores:', e);
         }
@@ -121,12 +123,14 @@ export class DoctorController {
                 const disponible = totalIngresosEfectivo - totalGastosEfectivo;
 
                 if (monto > disponible) {
-                    UIHelper.showCustomAlert(
-                        `<b>Operación Denegada:</b> No hay suficiente efectivo en caja para realizar este pago al doctor.<br><br>` +
-                        `💵 <b>Efectivo disponible hoy (${localDateStr}):</b> S/. ${disponible.toFixed(2)}<br>` +
-                        `🚫 <b>Monto del pago:</b> S/. ${monto.toFixed(2)}`,
-                        'DENEGADO'
-                    );
+                    const mensaje = [
+                        'No hay suficiente efectivo en caja para realizar este pago al doctor.',
+                        '',
+                        `Fecha de caja: ${localDateStr}`,
+                        `Efectivo disponible: S/. ${disponible.toFixed(2)}`,
+                        `Monto solicitado: S/. ${monto.toFixed(2)}`
+                    ].join('\n');
+                    UIHelper.showCustomAlert(mensaje, 'OPERACION DENEGADA');
                     return;
                 }
             }
@@ -154,7 +158,13 @@ export class DoctorController {
                 await this.render();
             }
 
-            UIHelper.showCustomAlert(`Pago registrado con éxito.<br>💵 Modalidad: ${modalidad}<br>📉 Nueva deuda pendiente: S/. ${nuevaPendiente.toFixed(2)}`, 'ÉXITO');
+            const mensajeExito = [
+                'Pago registrado correctamente.',
+                '',
+                `Modalidad: ${modalidad}`,
+                `Nueva deuda pendiente: S/. ${nuevaPendiente.toFixed(2)}`
+            ].join('\n');
+            UIHelper.showCustomAlert(mensajeExito, 'EXITO');
         } catch (e) {
             console.error('Error al registrar pago:', e);
             UIHelper.showCustomAlert('Error al registrar pago: ' + e.message, 'ERROR');

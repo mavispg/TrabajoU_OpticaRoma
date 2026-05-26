@@ -14,6 +14,7 @@ export class VentaView {
         this.dateInput = document.getElementById('c_date');
         this.dniInput = document.getElementById('c_dni');
         this.nameInput = document.getElementById('c_name');
+        this.phoneInput = document.getElementById('c_phone');
         this.monturaSelect = document.getElementById('sel_montura_pivot');
         this.lunasInput = document.getElementById('c_lunas');
         this.labSelect = document.getElementById('sel_lab');
@@ -65,6 +66,14 @@ export class VentaView {
         this.pagoCodigoEl = document.getElementById('pago_venta_codigo');
         this.pagoSaldoEl = document.getElementById('pago_venta_saldo');
         this.pagoMontoInput = document.getElementById('pago_venta_monto');
+        this.pagoMetodoSelect = document.getElementById('pago_venta_metodo');
+        this.historialPagosModal = document.getElementById('historialPagosModal');
+        this.historialPagosList = document.getElementById('historialPagosList');
+        this.historialPagosCloseBtn = document.querySelector('.historial-pagos-close');
+
+        // Inputs para la factura y consulta RUC
+        this.rucInput = document.getElementById('ticket_client_ruc');
+        this.rsInput = document.getElementById('ticket_client_rs');
     }
 
     renderTable(ventas, role = 'admin') {
@@ -73,6 +82,14 @@ export class VentaView {
         ventas.forEach(v => {
             const newRow = document.createElement('tr');
             newRow.setAttribute('data-id', v.id);
+            newRow.dataset.search = [
+                v.codigo_venta,
+                v.nombre_cliente,
+                v.dni_cliente,
+                v.celular_cliente,
+                v.fecha,
+                v.datos_compra
+            ].filter(Boolean).join(' ').toLowerCase();
             
             // Format icon based on payment method
             let methodHtml = v.modalidad_pago;
@@ -87,6 +104,7 @@ export class VentaView {
                 formattedDatos = partes.map(p => {
                     const texto = p.trim();
                     if(!texto) return "";
+                    if (texto.startsWith("Motivo Anulacion:") || texto.startsWith("Fecha Anulacion:")) return "";
                     
                     // Añadir iconos según el tipo de dato
                     let icon = "<i class='bx bx-chevron-right' style='color:#aaa;'></i>";
@@ -107,35 +125,77 @@ export class VentaView {
             const saldo = parseFloat(v.saldo) || 0;
             const total = parseFloat(v.monto_total) || 0;
             const estado = v.estado || (saldo === 0 ? 'CANCELADO' : 'PENDIENTE');
-            const estadoColor = estado === 'CANCELADO' ? '#27ae60' : '#e67e22';
+            const estadoColor = estado === 'CANCELADO' ? '#27ae60' : (estado === 'ANULADO' ? '#e74c3c' : '#e67e22');
+            const estadoEntrega = v.estado_entrega || 'EN PROCESO';
+            const entregaLista = estadoEntrega === 'LISTO PARA ENTREGA';
+            const entregado = estadoEntrega === 'ENTREGADO';
+            const anulado = estadoEntrega === 'ANULADO' || estado === 'ANULADO';
+            const entregaColor = anulado ? '#e74c3c' : (entregado ? '#27ae60' : (entregaLista ? '#2e61b3' : '#7f8c8d'));
+            const dniMasked = this.maskDocument(v.dni_cliente);
+            const motivoAnulacion = this.getMotivoAnulacion(v.datos_compra);
+            const motivoBtn = anulado
+                ? `<button class="icon-btn motivo-anulacion-btn" title="Ver motivo de anulacion" data-motivo="${this.escapeHtml(motivoAnulacion)}" style="color:#e67e22;margin-left:4px;"><i class='bx bx-error-circle' style="font-size:18px;"></i></button>`
+                : '';
+            const canAdminEdit = role === 'admin' && !anulado && !entregado && !entregaLista;
+            const canAdminAnular = role === 'admin' && !anulado;
 
-            const abonoBtn = (role === 'admin' && saldo > 0)
+            const abonoBtn = (!anulado && !entregado && saldo > 0)
                 ? `<button class="icon-btn abono-btn" title="Registrar Abono" style="color: #27ae60;"><i class='bx bx-dollar-circle' style="font-size: 18px;"></i></button>`
                 : '';
 
-            const printBtn = `<button class="icon-btn print-btn" title="Imprimir Comprobante" style="color: #2e61b3;"><i class='bx bx-printer' style="font-size: 18px;"></i></button>`;
+            const printBtn = (!anulado && saldo === 0)
+                ? `<button class="icon-btn print-btn" title="Imprimir Comprobante" style="color: #2e61b3;"><i class='bx bx-printer' style="font-size: 18px;"></i></button>`
+                : '';
+
+            const listoEntregaBtn = (!anulado && saldo === 0 && !entregaLista && !entregado)
+                ? `<button class="icon-btn listo-entrega-btn" title="Marcar Pedido Listo" style="color: #8e44ad;"><i class='bx bx-check-circle' style="font-size: 18px;"></i></button>`
+                : '';
+            const entregadoBtn = (!anulado && entregaLista)
+                ? `<button class="icon-btn entregado-btn" title="Marcar Entregado" style="color: #27ae60;"><i class='bx bx-package' style="font-size: 18px;"></i></button>`
+                : '';
+            const editBtn = canAdminEdit
+                ? `<button class="icon-btn edit-btn" title="Editar Venta"><i class='bx bxs-edit-alt'></i></button>`
+                : '';
+            const deleteBtn = canAdminEdit && estado === 'PENDIENTE'
+                ? `<button class="icon-btn delete-btn" title="Eliminar Venta"><i class='bx bxs-trash'></i></button>`
+                : '';
+            const anularBtn = canAdminAnular
+                ? `<button class="icon-btn anular-btn" title="Anular Venta" style="color: #e74c3c;"><i class='bx bx-block' style="font-size: 18px;"></i></button>`
+                : '';
+            const pagosBtn = `<button class="icon-btn pagos-history-btn" title="Historial de Pagos" style="color: #34495e;"><i class='bx bx-receipt' style="font-size: 18px;"></i></button>`;
 
             const actionsHtml = (role === 'admin') 
                 ? `<div class="actions-wrapper">
                         ${abonoBtn}
+                        ${listoEntregaBtn}
+                        ${entregadoBtn}
+                        ${pagosBtn}
                         ${printBtn}
-                        <button class="icon-btn edit-btn" title="Editar Venta"><i class='bx bxs-edit-alt'></i></button>
-                        <button class="icon-btn delete-btn" title="Eliminar Venta"><i class='bx bxs-trash'></i></button>
+                        ${editBtn}
+                        ${deleteBtn}
+                        ${anularBtn}
                    </div>`
-                : `<div class="actions-wrapper">${printBtn}</div>`;
+                : `<div class="actions-wrapper">${abonoBtn}${listoEntregaBtn}${entregadoBtn}${pagosBtn}${printBtn}</div>`;
 
             newRow.innerHTML = `
                 <td><strong>${v.codigo_venta}</strong></td>
-                <td>${v.nombre_cliente || 'N/A'}</td>
+                <td>
+                    ${v.nombre_cliente || 'N/A'}<br>
+                    <small style="color:#777;">DNI: ${dniMasked}</small>
+                </td>
                 <td style="padding: 12px 8px;">${formattedDatos || 'N/A'}</td>
                 <td>${v.fecha}</td>
                 <td>
                     <strong>Tot: ${UIHelper.formatCurrency(total)}</strong><br>
-                    <span style="color:#27ae60; font-size:11px;">A Cta: ${UIHelper.formatCurrency(aCuenta)}</span><br>
+                    <span style="color:#27ae60; font-size:11px;">Pagado: ${UIHelper.formatCurrency(aCuenta)}</span><br>
                     <span style="color:#e74c3c; font-size:11px; font-weight:600;">Sal: ${UIHelper.formatCurrency(saldo)}</span><br>
                     <small>${methodHtml}</small>
                 </td>
-                <td><span class="status-badge" style="background:${estadoColor}15; color:${estadoColor}; border:1px solid ${estadoColor}; padding:2px 8px; border-radius:10px; font-weight:600; font-size:11px;">${estado}</span></td>
+                <td>
+                    <span class="status-badge" style="background:${estadoColor}15; color:${estadoColor}; border:1px solid ${estadoColor}; padding:2px 8px; border-radius:10px; font-weight:600; font-size:11px;">${estado}</span>${motivoBtn}
+                    <br>
+                    <span class="status-badge" style="display:inline-block; margin-top:4px; background:${entregaColor}15; color:${entregaColor}; border:1px solid ${entregaColor}; padding:2px 8px; border-radius:10px; font-weight:600; font-size:10px;">${estadoEntrega}</span>
+                </td>
                 <td class="actions-cell">
                     ${actionsHtml}
                 </td>
@@ -214,7 +274,8 @@ export class VentaView {
         this.codeInput.value = venta.codigo_venta;
         this.dateInput.value = venta.fecha;
         this.nameInput.value = venta.nombre_cliente;
-        this.dniInput.value = ""; 
+        this.dniInput.value = venta.dni_cliente || ""; 
+        if (this.phoneInput) this.phoneInput.value = venta.celular_cliente || "";
         this.monturaSelect.value = venta.montura_id || '';
         
         // Limpiar inputs antes de llenar
@@ -296,9 +357,10 @@ export class VentaView {
             datosCompra += "M: " + monturaText.split('(')[0].trim() + ` (S/. ${pMontura.toFixed(2)}) `;
         }
 
-        if (this.lunasInput.value.trim() !== '') {
+        if (this.lunasInput.value.trim() !== '' || (parseFloat(this.precioLunaInput.value) || 0) > 0) {
             const pLuna = parseFloat(this.precioLunaInput.value) || 0;
-            datosCompra += "| L: " + this.lunasInput.value.trim() + ` (S/. ${pLuna.toFixed(2)}) `;
+            const lunaDetalle = this.lunasInput.value.trim() || 'Lunas';
+            datosCompra += "| L: " + lunaDetalle + ` (S/. ${pLuna.toFixed(2)}) `;
         }
 
         if (this.labSelect.value.trim() !== '') {
@@ -328,6 +390,8 @@ export class VentaView {
         return {
             codigo_venta: this.codeInput.value,
             fecha: this.dateInput.value,
+            dni_cliente: this.dniInput.value,
+            celular_cliente: this.phoneInput ? this.phoneInput.value : '',
             nombre_cliente: this.nameInput.value,
             montura_id: this.monturaSelect.value || null,
             datos_compra: datosCompra,
@@ -351,9 +415,13 @@ export class VentaView {
         if (this.pagoCloseBtn) {
             this.pagoCloseBtn.addEventListener('click', () => this.closePagoModal());
         }
+        if (this.historialPagosCloseBtn) {
+            this.historialPagosCloseBtn.addEventListener('click', () => this.closeHistorialPagosModal());
+        }
         window.addEventListener('click', (e) => {
             if (e.target == this.modal) this.closeModal();
             if (e.target == this.pagoModal) this.closePagoModal();
+            if (e.target == this.historialPagosModal) this.closeHistorialPagosModal();
         });
     }
 
@@ -366,7 +434,7 @@ export class VentaView {
         }
     }
 
-    bindTableActions(editHandler, deleteHandler, abonoHandler, printHandler) {
+    bindTableActions(editHandler, deleteHandler, abonoHandler, printHandler, listoEntregaHandler, entregadoHandler, anularHandler, pagosHistoryHandler) {
         if (this.tableBody) {
             this.tableBody.addEventListener('click', (e) => {
                 const row = e.target.closest('tr');
@@ -388,8 +456,122 @@ export class VentaView {
                 if (e.target.closest('.print-btn') && printHandler) {
                     printHandler(id);
                 }
+
+                if (e.target.closest('.listo-entrega-btn') && listoEntregaHandler) {
+                    listoEntregaHandler(id);
+                }
+
+                if (e.target.closest('.entregado-btn') && entregadoHandler) {
+                    entregadoHandler(id);
+                }
+
+                if (e.target.closest('.anular-btn') && anularHandler) {
+                    anularHandler(id);
+                }
+
+                if (e.target.closest('.pagos-history-btn') && pagosHistoryHandler) {
+                    pagosHistoryHandler(id);
+                }
+
+                const motivoBtn = e.target.closest('.motivo-anulacion-btn');
+                if (motivoBtn) {
+                    UIHelper.showCustomAlert(motivoBtn.dataset.motivo || 'Sin motivo registrado', 'MOTIVO DE ANULACION');
+                }
             });
         }
+    }
+
+    openHistorialPagosModal(pagos, emptyMessage = 'No hay pagos registrados para esta venta.', venta = null) {
+        if (!this.historialPagosModal || !this.historialPagosList) return;
+
+        const pagosList = pagos || [];
+        const resumenHtml = venta ? this.renderResumenPagos(venta, pagosList) : '';
+
+        if (pagosList.length === 0) {
+            this.historialPagosList.innerHTML = `
+                ${resumenHtml}
+                <p style="text-align:center;color:#777;padding:16px;">${this.escapeHtml(emptyMessage)}</p>
+            `;
+        } else {
+            this.historialPagosList.innerHTML = resumenHtml + pagosList.map(p => {
+                const tipo = (p.tipo || 'PAGO').toUpperCase();
+                const monto = parseFloat(p.monto) || 0;
+                const isNegative = tipo.includes('DESCUENTO') || tipo.includes('DEVOLUCION') || monto < 0;
+                const amountColor = isNegative ? '#e74c3c' : '#27ae60';
+                const amountPrefix = isNegative ? '- ' : '';
+
+                return `
+                <div style="display:flex;justify-content:space-between;gap:12px;padding:12px;border-bottom:1px solid #eee;align-items:center;">
+                    <div>
+                        <strong>${this.escapeHtml(p.tipo || 'PAGO')}</strong><br>
+                        <span style="font-size:12px;color:#666;">${this.escapeHtml(p.fecha_pago || '')} - ${this.escapeHtml(p.modalidad_pago || 'EFECTIVO')}</span>
+                        ${p.usuario ? `<br><span style="font-size:12px;color:#888;">Cobrado por: ${this.escapeHtml(p.usuario)}</span>` : ''}
+                    </div>
+                    <strong style="color:${amountColor};">${amountPrefix}${UIHelper.formatCurrency(Math.abs(monto))}</strong>
+                </div>
+            `;
+            }).join('');
+        }
+
+        this.historialPagosModal.style.display = 'block';
+    }
+
+    renderResumenPagos(venta, pagos) {
+        const totalVenta = parseFloat(venta.monto_total) || parseFloat(venta.total_final) || 0;
+        const totalPagado = pagos.reduce((sum, p) => {
+            const tipo = (p.tipo || '').toUpperCase();
+            if (tipo.includes('DESCUENTO')) return sum;
+            return sum + (parseFloat(p.monto) || 0);
+        }, 0);
+        const diferencia = totalVenta - totalPagado;
+        const saldoLabel = diferencia >= 0 ? 'Saldo pendiente' : 'Sobrante';
+        const saldoColor = diferencia >= 0 ? '#e74c3c' : '#e67e22';
+
+        return `
+            <div style="background:#f8fafc;border:1px solid #e5e9f0;border-radius:8px;padding:12px;margin-bottom:12px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                    <span>Total de venta</span>
+                    <strong>${UIHelper.formatCurrency(totalVenta)}</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;color:#27ae60;">
+                    <span>Pagado por cliente</span>
+                    <strong>${UIHelper.formatCurrency(totalPagado)}</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;color:${saldoColor};border-top:1px solid #dfe4ea;padding-top:6px;">
+                    <span>${saldoLabel}</span>
+                    <strong>${UIHelper.formatCurrency(Math.abs(diferencia))}</strong>
+                </div>
+            </div>
+        `;
+    }
+
+    closeHistorialPagosModal() {
+        if (this.historialPagosModal) this.historialPagosModal.style.display = 'none';
+    }
+
+    escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        }[char]));
+    }
+
+    maskDocument(value) {
+        const digits = String(value || '').replace(/\D/g, '');
+        if (!digits) return '-';
+        return `${'*'.repeat(Math.max(0, digits.length - 3))}${digits.slice(-3)}`;
+    }
+
+    getMotivoAnulacion(datosCompra) {
+        const motivo = String(datosCompra || '')
+            .split('|')
+            .map(p => p.trim())
+            .find(p => p.startsWith('Motivo Anulacion:'));
+
+        return motivo ? motivo.replace('Motivo Anulacion:', '').trim() : 'Sin motivo registrado';
     }
 
     bindSearch() {
@@ -398,6 +580,12 @@ export class VentaView {
                 const filter = e.target.value.toLowerCase();
                 const rows = this.tableBody.getElementsByTagName('tr');
                 for (let i = 0; i < rows.length; i++) {
+                    const searchableText = rows[i].dataset.search || rows[i].innerText.toLowerCase();
+                    if (searchableText.includes(filter)) {
+                        rows[i].style.display = "";
+                        continue;
+                    }
+
                     const cells = rows[i].getElementsByTagName('td');
                     let match = false;
                     for (let j = 0; j < cells.length - 1; j++) {
@@ -450,8 +638,31 @@ export class VentaView {
             this.dniInput.addEventListener('keyup', (e) => {
                 if (this.dniInput.value.length === 8) {
                     handler(this.dniInput.value);
-                } else {
-                    this.nameInput.value = "";
+                }
+            });
+        }
+    }
+
+    /**
+     * Vincula la búsqueda automática por RUC en la Factura
+     * @param {Function} handler 
+     */
+    bindRucSearch(handler) {
+        if (this.rucInput) {
+            this.rucInput.addEventListener('keyup', async (e) => {
+                if (this.rucInput.value.length === 11) {
+                    const ruc = this.rucInput.value;
+                    if (this.rsInput) this.rsInput.placeholder = "Buscando en SUNAT...";
+                    const data = await handler(ruc);
+                    if (data && data.razonSocial) {
+                        if (this.rsInput) {
+                            this.rsInput.value = data.razonSocial;
+                            // Disparar evento input para actualizar la vista previa de la factura
+                            this.rucInput.dispatchEvent(new Event('input'));
+                        }
+                    } else {
+                        if (this.rsInput) this.rsInput.placeholder = "No encontrado, ingrese manualmente";
+                    }
                 }
             });
         }
@@ -495,6 +706,9 @@ export class VentaView {
             this.pagoMontoInput.value = venta.saldo.toFixed(2);
             this.pagoMontoInput.max = venta.saldo.toFixed(2);
         }
+        if (this.pagoMetodoSelect) {
+            this.pagoMetodoSelect.value = venta.modalidad_pago || 'EFECTIVO';
+        }
         if (this.pagoModal) this.pagoModal.style.display = 'block';
     }
 
@@ -509,7 +723,8 @@ export class VentaView {
                 e.preventDefault();
                 const id = this.pagoIdInput.value;
                 const monto = parseFloat(this.pagoMontoInput.value) || 0;
-                handler(id, monto);
+                const metodo = this.pagoMetodoSelect ? this.pagoMetodoSelect.value : 'EFECTIVO';
+                handler(id, monto, metodo);
             });
         }
     }
@@ -517,7 +732,7 @@ export class VentaView {
     /**
      * HU09: Métodos de Gestión y Visualización de Boleta / Factura Electrónica
      */
-    openPrintModal(venta) {
+    openPrintModal(venta, rucLookupHandler = null) {
         this.currentPrintVenta = venta;
         this.currentPrintType = 'BOLETA'; // Por defecto
 
@@ -578,7 +793,24 @@ export class VentaView {
         }
 
         // Auto-actualizar preview mientras el usuario tipea
-        if (rucInput) rucInput.oninput = updateTicket;
+        if (rucInput) rucInput.oninput = async () => {
+            const ruc = rucInput.value.replace(/\D/g, '');
+            rucInput.value = ruc;
+
+            if (ruc.length === 11 && rucLookupHandler) {
+                try {
+                    const empresa = await rucLookupHandler(ruc);
+                    if (rsInput) rsInput.value = empresa.razonSocial || '';
+                } catch (error) {
+                    console.error('Error consultando RUC:', error);
+                    if (rsInput) rsInput.value = '';
+                }
+            } else if (ruc.length < 11 && rsInput) {
+                rsInput.value = '';
+            }
+
+            updateTicket();
+        };
         if (rsInput) rsInput.oninput = updateTicket;
 
         // Cerrar modal
@@ -588,7 +820,12 @@ export class VentaView {
         
         // Imprimir
         if (btnImprimir) {
-            btnImprimir.onclick = () => {
+            btnImprimir.onclick = async () => {
+                const ok = await UIHelper.showCustomConfirm('¿Deseas imprimir este comprobante?', {
+                    title: 'IMPRIMIR COMPROBANTE',
+                    confirmText: 'Imprimir'
+                });
+                if (!ok) return;
                 window.print();
             };
         }
@@ -695,6 +932,31 @@ export class VentaView {
         return `SON: ${texto.trim()} CON ${centavosStr}/100 SOLES`;
     }
 
+    getComprobanteData(venta, isBoleta, extraData) {
+        const serie = isBoleta ? 'B001' : 'F001';
+        const tipoComprobante = isBoleta ? '03' : '01';
+        const tipoDocCliente = isBoleta ? '1' : '6';
+        const correlativo = this.getCorrelativoComprobante(venta.codigo_venta);
+        const clientDocVal = isBoleta
+            ? String(venta.dni_cliente || '-').replace(/\D/g, '')
+            : String(extraData.ruc || '20100100100').replace(/\D/g, '');
+
+        return {
+            serie,
+            correlativo,
+            tipoComprobante,
+            tipoDocCliente,
+            clientDocVal,
+            serialDoc: `${serie}-${correlativo}`
+        };
+    }
+
+    getCorrelativoComprobante(codigoVenta) {
+        const match = String(codigoVenta || '').match(/\d+/);
+        const numero = match ? parseInt(match[0], 10) : 0;
+        return numero.toString().padStart(8, '0');
+    }
+
     renderPrintTicket(venta, type, extraData) {
         const ticketContainer = document.getElementById('ticketContainer');
         if (!ticketContainer) return;
@@ -702,7 +964,7 @@ export class VentaView {
         // =======================================================
         // 🏢 DATOS DE LA EMPRESA (Edítalos aquí cuando quieras cambiar los datos)
         // =======================================================
-        const empresa_nombre = "ÓPTICA ROMA S.A.C.";
+        const empresa_nombre = "OPTICA ROMA S.A.C.";
         const empresa_ruc = "20601234567";
         const empresa_direccion = "AV. COLONIAL 1420 - LIMA";
         const empresa_telefono = "987 654 321";
@@ -711,19 +973,16 @@ export class VentaView {
         // =======================================================
 
         const isBoleta = type === 'BOLETA';
-        const docName = isBoleta ? 'BOLETA DE VENTA ELECTRÓNICA' : 'FACTURA DE VENTA ELECTRÓNICA';
-        const serialDoc = isBoleta 
-            ? `B001-${venta.codigo_venta.toString().padStart(8, '0')}` 
-            : `F001-${venta.codigo_venta.toString().padStart(8, '0')}`;
+        const docName = isBoleta ? 'BOLETA DE VENTA ELECTRONICA' : 'FACTURA DE VENTA ELECTRONICA';
+        const comprobante = this.getComprobanteData(venta, isBoleta, extraData);
+        const serialDoc = comprobante.serialDoc;
 
         const clientDocLabel = isBoleta ? 'DNI' : 'RUC';
-        const clientDocVal = isBoleta 
-            ? (venta.dni_cliente || '00000000') 
-            : (extraData.ruc || '20100100100');
+        const clientDocVal = comprobante.clientDocVal || '-';
             
-        const clientNameLabel = isBoleta ? 'CLIENTE' : 'RAZÓN SOCIAL';
+        const clientNameLabel = isBoleta ? 'CLIENTE' : 'RAZON SOCIAL';
         const clientNameVal = isBoleta
-            ? (venta.nombre_cliente || 'PÚBLICO GENERAL')
+            ? (venta.nombre_cliente || 'CLIENTE GENERAL')
             : (extraData.razonSocial || 'EMPRESA DEMO S.A.C.');
 
         const totalVal = parseFloat(venta.monto_total) || 0;
@@ -742,13 +1001,23 @@ export class VentaView {
         const timeStr = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: true });
 
         // Construir trama real con formato SUNAT para el QR único
-        const qrText = `${empresa_ruc}|${isBoleta ? '03' : '01'}|${isBoleta ? 'B001' : 'F001'}|${venta.codigo_venta.toString().padStart(8, '0')}|${igvVal.toFixed(2)}|${totalVal.toFixed(2)}|${venta.fecha}|${isBoleta ? '1' : '6'}|${clientDocVal}`;
+        const qrText = [
+            empresa_ruc,
+            comprobante.tipoComprobante,
+            comprobante.serie,
+            comprobante.correlativo,
+            igvVal.toFixed(2),
+            totalVal.toFixed(2),
+            venta.fecha,
+            comprobante.tipoDocCliente,
+            clientDocVal
+        ].join('|');
         const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrText)}`;
 
         ticketContainer.innerHTML = `
             <div style="text-align: center; margin-bottom: 12px;">
                 <div style="font-size: 18px; font-weight: bold; background: #000; color: #fff; padding: 6px 12px; display: inline-block; margin-bottom: 5px; border-radius: 4px; letter-spacing: 2px;">
-                    ÓPTICA ROMA
+                    OPTICA ROMA
                 </div>
                 <div style="font-weight: bold; font-size: 13px; margin-top: 5px;">${empresa_nombre}</div>
                 <div style="font-size: 11px;">RUC: ${empresa_ruc}</div>
@@ -772,7 +1041,7 @@ export class VentaView {
 
             <div style="border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 5px; font-weight: bold; display: flex; font-size: 11px;">
                 <div style="width: 15%;">CANT</div>
-                <div style="width: 60%;">DESCRIPCIÓN</div>
+                <div style="width: 60%;">DESCRIPCION</div>
                 <div style="width: 25%; text-align: right;">TOTAL</div>
             </div>
 
@@ -801,20 +1070,20 @@ export class VentaView {
                 <strong>COND. VENTA:</strong> CONTADO
             </div>
 
-            <!-- Código QR de Representación de SUNAT -->
+            <!-- Codigo QR de Representacion de SUNAT -->
             <div style="text-align: center; margin-bottom: 15px;">
                 <div style="display: inline-block; padding: 4px; border: 1px solid #000; background: #fff;">
-                    <img src="${qrUrl}" style="width: 90px; height: 90px; display: block;" alt="Código QR SUNAT">
+                    <img src="${qrUrl}" style="width: 90px; height: 90px; display: block;" alt="Codigo QR SUNAT">
                 </div>
                 <div style="font-size: 9px; color: #555; margin-top: 6px; line-height: 1.2;">
-                    Representación Impresa de la ${isBoleta ? 'BOLETA' : 'FACTURA'} DE VENTA ELECTRÓNICA<br>
+                    Representacion Impresa de la ${isBoleta ? 'BOLETA' : 'FACTURA'} DE VENTA ELECTRONICA<br>
                     Puede consultar en: ${empresa_web}<br>
-                    Autorizado mediante Resolución N° 034-005-0007241
+                    Autorizado mediante Resolucion Nro. 034-005-0007241
                 </div>
             </div>
 
             <div style="text-align: center; font-size: 10px; font-weight: bold; letter-spacing: 1px;">
-                ¡GRACIAS POR SU PREFERENCIA!
+                GRACIAS POR SU PREFERENCIA
             </div>
         `;
     }

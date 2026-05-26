@@ -34,13 +34,14 @@ export class DashboardController {
             const ventas = await VentaModel.getAll();
             const clientes = await ClientModel.getAll();
             const monturas = await MonturaModel.getAll();
+            const ventasValidas = ventas.filter(v => !this.isVentaAnulada(v));
 
             // 2. Calcular Estadísticas
             const stats = {
-                totalSalesAmount: ventas.reduce((acc, v) => acc + (v.monto_total || 0), 0),
+                totalSalesAmount: ventasValidas.reduce((acc, v) => acc + (v.monto_total || 0), 0),
                 totalClients: clientes.length,
                 lowStockCount: monturas.filter(m => m.stock_disponible <= 5).length,
-                todaySalesCount: this.getTodaySalesCount(ventas)
+                todaySalesCount: this.getTodaySalesCount(ventasValidas)
             };
 
             // 3. Obtener Ventas Recientes (últimas 5)
@@ -64,5 +65,10 @@ export class DashboardController {
         
         // Buscamos ventas cuya fecha coincida con hoy
         return ventas.filter(v => v.fecha === todayStr).length;
+    }
+
+    isVentaAnulada(venta) {
+        return (venta?.estado || '').toUpperCase() === 'ANULADO' ||
+            (venta?.estado_entrega || '').toUpperCase() === 'ANULADO';
     }
 }

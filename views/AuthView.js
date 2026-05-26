@@ -56,12 +56,12 @@ export class AuthView {
                 if(this.navItems.ventas) this.navItems.ventas.style.display = 'block';
                 if(this.navItems.gastos) this.navItems.gastos.style.display = 'block';
                 if(this.navItems.cuadre) this.navItems.cuadre.style.display = 'none';
-                if(this.navItems.doctores) this.navItems.doctores.style.display = 'none';
+                if(this.navItems.doctores) this.navItems.doctores.style.display = 'block';
                 if(this.navItems.users) this.navItems.users.style.display = 'none';
                 
                 // Forzar ir a Inicio si estaba en una sección no autorizada
                 const currentActive = document.querySelector('.nav-link.active');
-                if (currentActive && ['users', 'cuadre', 'doctores'].includes(currentActive.getAttribute('data-target'))) {
+                if (currentActive && ['users', 'cuadre'].includes(currentActive.getAttribute('data-target'))) {
                     const homeLink = this.navItems.home.querySelector('a');
                     if(homeLink) homeLink.click();
                 }

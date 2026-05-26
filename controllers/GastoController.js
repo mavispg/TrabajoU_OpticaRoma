@@ -19,6 +19,7 @@ export class GastoController {
     }
 
     async init() {
+        await GastoModel.compactCodes();
         await this.render();
     }
 
@@ -70,12 +71,13 @@ export class GastoController {
                 const montoGasto = parseFloat(formData.monto) || 0;
 
                 if (montoGasto > disponible) {
-                    UIHelper.showCustomAlert(
-                        `<b>Operación Denegada:</b> No hay suficiente efectivo en caja para registrar este gasto.<br><br>` +
-                        `💵 <b>Efectivo disponible:</b> S/. ${disponible.toFixed(2)}<br>` +
-                        `🚫 <b>Monto del gasto:</b> S/. ${montoGasto.toFixed(2)}`,
-                        'DENEGADO'
-                    );
+                    const mensaje = [
+                        'No hay suficiente efectivo en caja para registrar este gasto.',
+                        '',
+                        `Efectivo disponible: S/. ${disponible.toFixed(2)}`,
+                        `Monto solicitado: S/. ${montoGasto.toFixed(2)}`
+                    ].join('\n');
+                    UIHelper.showCustomAlert(mensaje, 'OPERACION DENEGADA');
                     return;
                 }
             }
@@ -110,6 +112,7 @@ export class GastoController {
         if (ok) {
             try {
                 await GastoModel.delete(id);
+                await GastoModel.compactCodes();
                 await this.render();
                 UIHelper.showCustomAlert('Gasto eliminado.', 'OK');
             } catch (e) {

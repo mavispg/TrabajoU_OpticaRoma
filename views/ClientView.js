@@ -17,6 +17,21 @@ export class ClientView {
         this.historyList = document.getElementById('historyList');
         this.historyClientName = document.getElementById('historyClientName');
         this.historyCloseBtn = document.querySelector('.history-close');
+
+        // Modal Proforma
+        this.proformaModal = document.getElementById('proformaModal');
+        this.proformaForm = document.getElementById('proformaForm');
+        this.proformaCloseBtn = document.querySelector('.proforma-close');
+        this.proformaClientIdInput = document.getElementById('proforma_client_id');
+        this.proformaClientNameInput = document.getElementById('proforma_client_name');
+        this.proformaClientPhoneInput = document.getElementById('proforma_client_phone');
+        this.proformaDetailInput = document.getElementById('proforma_detail');
+        this.proformaExtraInput = document.getElementById('proforma_extra');
+        this.proformaAmountInput = document.getElementById('proforma_amount');
+        this.proformaChannelSelect = document.getElementById('proforma_channel');
+        this.proformaMessageInput = document.getElementById('proforma_message');
+        this.proformaPreview = document.getElementById('proforma_preview');
+        this.proformaMessageTouched = false;
         
         // Inputs
         this.dniInput = document.getElementById('cl_dni');
@@ -39,7 +54,10 @@ export class ClientView {
                 <td>${c.nombre}</td>
                 <td>${c.celular}</td>
                 <td style="text-align: right;">
-                    <button class="btn-history" data-id="${c.id}" data-name="${c.nombre}" title="Ver Historial Visual" style="background: #27ae60; color: #fff; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px;">
+                    <button class="btn-proforma" data-id="${c.id}" data-name="${c.nombre}" data-phone="${c.celular}" title="Enviar Cotizacion" style="background: #27ae60; color: #fff; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px;">
+                        <i class='bx bx-message-rounded-detail'></i>
+                    </button>
+                    <button class="btn-history" data-id="${c.id}" data-name="${c.nombre}" title="Ver Historial Visual" style="background: #7f8c8d; color: #fff; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px;">
                         <i class='bx bx-history'></i>
                     </button>
                     <button class="btn-edit" data-id="${c.id}" style="background: #2e61b3; color: #fff; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px;">
@@ -111,6 +129,20 @@ export class ClientView {
         if (this.btnAdd) this.btnAdd.addEventListener('click', () => handler());
     }
 
+    /**
+     * Vincula la búsqueda automática por DNI en la gestión de clientes
+     * @param {Function} handler 
+     */
+    bindDniSearch(handler) {
+        if (this.dniInput) {
+            this.dniInput.addEventListener('keyup', (e) => {
+                if (this.dniInput.value.length === 8) {
+                    handler(this.dniInput.value);
+                }
+            });
+        }
+    }
+
     bindCloseModal() {
         if (this.closeBtn) this.closeBtn.addEventListener('click', () => this.closeModal());
         window.addEventListener('click', (e) => {
@@ -128,16 +160,109 @@ export class ClientView {
         }
     }
 
-    bindTableActions(editHandler, deleteHandler, historyHandler) {
+    bindTableActions(editHandler, deleteHandler, historyHandler, proformaHandler) {
         if (this.tableBody) {
             this.tableBody.addEventListener('click', (e) => {
                 const btnEdit = e.target.closest('.btn-edit');
                 const btnDelete = e.target.closest('.btn-delete');
                 const btnHistory = e.target.closest('.btn-history');
+                const btnProforma = e.target.closest('.btn-proforma');
                 
                 if (btnEdit) editHandler(btnEdit.dataset.id);
                 if (btnDelete) deleteHandler(btnDelete.dataset.id);
                 if (btnHistory) historyHandler(btnHistory.dataset.id, btnHistory.dataset.name);
+                if (btnProforma) {
+                    proformaHandler({
+                        id: btnProforma.dataset.id,
+                        nombre: btnProforma.dataset.name,
+                        celular: btnProforma.dataset.phone
+                    });
+                }
+            });
+        }
+    }
+
+    openProformaModal(client, monturas = []) {
+        if (!this.proformaModal || !this.proformaForm) return;
+        this.proformaForm.reset();
+        this.proformaClientIdInput.value = client.id;
+        this.proformaClientNameInput.value = client.nombre;
+        this.proformaClientPhoneInput.value = client.celular;
+        this.populateProformaMonturas(monturas);
+        this.proformaDetailInput.value = '';
+        if (this.proformaExtraInput) this.proformaExtraInput.value = '';
+        this.proformaAmountInput.value = '';
+        this.proformaMessageTouched = false;
+        if (this.proformaChannelSelect) this.proformaChannelSelect.value = 'SMS';
+        this.updateProformaMessage(true);
+        this.proformaModal.style.display = 'block';
+    }
+
+    populateProformaMonturas(monturas) {
+        if (!this.proformaDetailInput) return;
+        this.proformaDetailInput.innerHTML = '<option value="">Seleccione una montura...</option>';
+
+        monturas
+            .filter(m => (parseInt(m.stock_disponible) || 0) > 0)
+            .forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = `${m.codigo} - ${m.nombre}`;
+                opt.text = `${m.codigo} - ${m.nombre} (S/. ${parseFloat(m.precio_venta || 0).toFixed(2)})`;
+                opt.dataset.precio = m.precio_venta || 0;
+                this.proformaDetailInput.appendChild(opt);
+            });
+    }
+
+    closeProformaModal() {
+        if (this.proformaModal) this.proformaModal.style.display = 'none';
+        if (this.proformaForm) this.proformaForm.reset();
+    }
+
+    updateProformaMessage(force = false) {
+        if (!this.proformaMessageInput) return;
+        if (this.proformaMessageTouched && !force) return;
+        const cliente = this.proformaClientNameInput?.value || 'cliente';
+        const detalle = this.proformaDetailInput?.value || 'una montura disponible';
+        const extra = this.proformaExtraInput?.value?.trim();
+        const monto = parseFloat(this.proformaAmountInput?.value) || 0;
+        const extraText = extra ? ` ${extra}.` : '';
+        const message = `Hola ${cliente}, soy de Optica Roma. Te comparto una cotizacion referencial: ${detalle}${extraText} Total aprox. S/. ${monto.toFixed(2)}. Si deseas, puedes acercarte a tienda para separar tu pedido.`;
+        this.proformaMessageInput.value = message;
+        if (this.proformaPreview) this.proformaPreview.innerText = message;
+    }
+
+    bindProformaForm(handler) {
+        if (this.proformaDetailInput) {
+            this.proformaDetailInput.addEventListener('change', () => {
+                const selected = this.proformaDetailInput.options[this.proformaDetailInput.selectedIndex];
+                if (selected?.dataset?.precio) {
+                    this.proformaAmountInput.value = parseFloat(selected.dataset.precio).toFixed(2);
+                }
+                this.updateProformaMessage();
+            });
+        }
+        if (this.proformaExtraInput) this.proformaExtraInput.addEventListener('input', () => this.updateProformaMessage());
+        if (this.proformaAmountInput) this.proformaAmountInput.addEventListener('input', () => this.updateProformaMessage());
+        if (this.proformaMessageInput) {
+            this.proformaMessageInput.addEventListener('input', () => {
+                this.proformaMessageTouched = true;
+                if (this.proformaPreview) this.proformaPreview.innerText = this.proformaMessageInput.value;
+            });
+        }
+
+        if (this.proformaForm) {
+            this.proformaForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                handler({
+                    id: this.proformaClientIdInput.value,
+                    nombre: this.proformaClientNameInput.value,
+                    celular: this.proformaClientPhoneInput.value,
+                    detalle: this.proformaDetailInput.value,
+                    extra: this.proformaExtraInput ? this.proformaExtraInput.value : '',
+                    monto: parseFloat(this.proformaAmountInput.value) || 0,
+                    canal: 'SMS',
+                    mensaje: this.proformaMessageInput.value
+                });
             });
         }
     }
@@ -217,8 +342,12 @@ export class ClientView {
                 this.historyModal.style.display = 'none';
             });
         }
+        if (this.proformaCloseBtn) {
+            this.proformaCloseBtn.addEventListener('click', () => this.closeProformaModal());
+        }
         window.addEventListener('click', (e) => {
             if (e.target == this.historyModal) this.historyModal.style.display = 'none';
+            if (e.target == this.proformaModal) this.closeProformaModal();
         });
     }
 }

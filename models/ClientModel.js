@@ -35,6 +35,17 @@ export class ClientModel {
         return data;
     }
 
+    static async getByCelular(celular) {
+        const { data, error } = await supabase
+            .from('clientes')
+            .select('*')
+            .eq('celular', celular)
+            .maybeSingle();
+            
+        if (error) throw error;
+        return data;
+    }
+
     /**
      * Registra un nuevo cliente en la base de datos.
      * @param {Object} client Objeto con dni, nombre y celular.

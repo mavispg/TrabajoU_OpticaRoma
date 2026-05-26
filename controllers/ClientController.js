@@ -1,5 +1,8 @@
 import { ClientModel } from '../models/ClientModel.js';
 import { VentaModel } from '../models/VentaModel.js';
+import { MonturaModel } from '../models/MonturaModel.js';
+import { ProformaModel } from '../models/ProformaModel.js';
+import { CotizacionModel } from '../models/CotizacionModel.js';
 import { ClientView } from '../views/ClientView.js';
 import { UIHelper } from '../views/UIHelper.js';
 
@@ -18,7 +21,13 @@ export class ClientController {
         this.view.bindCloseModal();
         this.view.bindCloseHistory();
         this.view.bindSubmit(this.handleSubmit.bind(this));
-        this.view.bindTableActions(this.handleEdit.bind(this), this.handleDelete.bind(this), this.handleShowHistory.bind(this));
+        this.view.bindTableActions(
+            this.handleEdit.bind(this),
+            this.handleDelete.bind(this),
+            this.handleShowHistory.bind(this),
+            this.handleOpenProforma.bind(this)
+        );
+        this.view.bindProformaForm(this.handleSendProforma.bind(this));
 
         this.init();
     }
@@ -125,6 +134,60 @@ export class ClientController {
             this.view.showHistory(name, history);
         } catch (error) {
             UIHelper.showCustomAlert('Error al cargar el historial: ' + error.message, 'ERROR');
+        }
+    }
+
+    async handleOpenProforma(client) {
+        try {
+            const monturas = await MonturaModel.getAll();
+            this.view.openProformaModal(client, monturas);
+        } catch (error) {
+            console.error('Error al cargar monturas para cotizacion:', error);
+            UIHelper.showCustomAlert('No se pudieron cargar las monturas disponibles.', 'ERROR');
+        }
+    }
+
+    async handleSendProforma(data) {
+        try {
+            if (!data.celular || !/^\d{9}$/.test(String(data.celular).replace(/\D/g, ''))) {
+                UIHelper.showCustomAlert('El cliente debe tener un celular valido de 9 digitos.', 'ERROR');
+                return;
+            }
+
+            await ProformaModel.enviarSms({
+                celular: data.celular,
+                mensaje: data.mensaje
+            });
+            await this.trySaveCotizacion(data);
+
+            this.view.closeProformaModal();
+            UIHelper.showCustomAlert('Cotizacion enviada por SMS correctamente.', 'EXITO');
+        } catch (error) {
+            console.error('Error al enviar cotizacion:', error);
+            UIHelper.showCustomAlert('Error al enviar cotizacion: ' + error.message, 'ERROR');
+        }
+    }
+
+    async trySaveCotizacion(data) {
+        try {
+            const today = new Date();
+            const tzOffset = today.getTimezoneOffset() * 60000;
+            const fecha = new Date(today - tzOffset).toISOString().split('T')[0];
+
+            await CotizacionModel.create({
+                cliente_id: data.id,
+                nombre_cliente: data.nombre,
+                celular: data.celular,
+                detalle: data.detalle,
+                extra: data.extra || '',
+                monto: data.monto,
+                canal: data.canal,
+                mensaje: data.mensaje,
+                estado: 'ENVIADA',
+                fecha
+            });
+        } catch (error) {
+            console.warn('No se pudo guardar la cotizacion:', error);
         }
     }
 }

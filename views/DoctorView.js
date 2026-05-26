@@ -22,9 +22,11 @@ export class DoctorView {
         this.pagoModalidadInput = document.getElementById('pago_doc_modalidad');
     }
 
-    renderTable(doctores) {
+    renderTable(doctores, role = 'admin') {
         if (!this.tableBody) return;
         this.tableBody.innerHTML = '';
+        const isAdmin = role === 'admin';
+        if (this.btnAdd) this.btnAdd.style.display = isAdmin ? 'flex' : 'none';
 
         if (doctores.length === 0) {
             this.tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;padding:20px;">No hay doctores registrados</td></tr>';
@@ -54,11 +56,13 @@ export class DoctorView {
                     <br><small style="color:#777;font-size:11px;">Acumulado: ${UIHelper.formatCurrency(total)}</small>
                 </td>
                 <td class="actions-cell">
-                    <div class="actions-wrapper">
-                        ${pendiente > 0 ? `<button class="icon-btn pago-btn" title="Registrar Pago" style="color:#27ae60;"><i class='bx bx-dollar-circle'></i></button>` : ''}
-                        <button class="icon-btn edit-btn" title="Editar"><i class='bx bxs-edit-alt'></i></button>
-                        <button class="icon-btn delete-btn" title="Eliminar"><i class='bx bxs-trash'></i></button>
-                    </div>
+                    ${isAdmin
+                        ? `<div class="actions-wrapper">
+                            ${pendiente > 0 ? `<button class="icon-btn pago-btn" title="Registrar Pago" style="color:#27ae60;"><i class='bx bx-dollar-circle'></i></button>` : ''}
+                            <button class="icon-btn edit-btn" title="Editar"><i class='bx bxs-edit-alt'></i></button>
+                            <button class="icon-btn delete-btn" title="Eliminar"><i class='bx bxs-trash'></i></button>
+                        </div>`
+                        : '<span style="color:#7f8c8d;font-size:12px;font-weight:600;">Solo lectura</span>'}
                 </td>
             `;
             this.tableBody.appendChild(tr);
