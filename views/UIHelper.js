@@ -6,6 +6,21 @@ export class UIHelper {
         return "S/. " + numberVal.toFixed(2);
     }
 
+    static normalizeText(value) {
+        return String(value ?? '')
+            .replace(/MU\uFFFDOZ/g, 'MU\u00D1OZ')
+            .replace(/NU\uFFFDEZ/g, 'NU\u00D1EZ')
+            .replace(/PE\uFFFDA/g, 'PE\u00D1A')
+            .replace(/ORDO\uFFFDEZ/g, 'ORDO\u00D1EZ')
+            .replace(/DUE\uFFFDAS/g, 'DUE\u00D1AS')
+            .replace(/IBA\uFFFDEZ/g, 'IBA\u00D1EZ')
+            .replace(/CASTA\uFFFDEDA/g, 'CASTA\u00D1EDA')
+            .replace(/ACU\uFFFDA/g, 'ACU\u00D1A')
+            .replace(/MA\uFFFDUCO/g, 'MA\u00D1UCO')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
     static showCustomAlert(message, title = 'OPTICA ROMA') {
         return new Promise((resolve) => {
             const customDialog = document.getElementById('customDialog');

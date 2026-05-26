@@ -106,6 +106,7 @@ export class VentaController {
 
     async handleFormSubmit(formData) {
         try {
+            formData.nombre_cliente = UIHelper.normalizeText(formData.nombre_cliente);
             await this.saveClientFromSale(formData);
 
             if (this.isEditing && this.currentEditId) {
@@ -188,11 +189,11 @@ export class VentaController {
         try {
             const client = await ClientModel.getByDni(dni);
             if (client) {
-                this.view.nameInput.value = client.nombre;
+                this.view.nameInput.value = UIHelper.normalizeText(client.nombre);
                 if (this.view.phoneInput) this.view.phoneInput.value = client.celular || "";
             } else {
                 const persona = await ConsultaDocumentoModel.consultarDni(dni);
-                this.view.nameInput.value = persona.nombreCompleto || "";
+                this.view.nameInput.value = UIHelper.normalizeText(persona.nombreCompleto || "");
                 if (this.view.phoneInput) this.view.phoneInput.value = "";
             }
         } catch (error) {
@@ -205,7 +206,7 @@ export class VentaController {
 
     async saveClientFromSale(formData) {
         const dni = (formData.dni_cliente || '').trim();
-        const nombre = (formData.nombre_cliente || '').trim();
+        const nombre = UIHelper.normalizeText(formData.nombre_cliente || '').trim();
         const celular = (formData.celular_cliente || '').trim();
         const hasValidDni = /^\d{8}$/.test(dni);
 

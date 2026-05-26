@@ -33,8 +33,16 @@ export class SunatModel {
             
             // Estructura de respuesta de apis.net.pe: nombres, apellidoPaterno, apellidoMaterno
             if (data && data.nombres) {
-                const nombreCompleto = `${data.nombres} ${data.apellidoPaterno} ${data.apellidoMaterno}`.trim();
-                return { nombre: nombreCompleto };
+                const nombre = `${data.apellidoPaterno || ''} ${data.apellidoMaterno || ''}, ${data.nombres || ''}`
+                    .replace(/\s+/g, ' ')
+                    .replace(' ,', ',')
+                    .trim();
+                return {
+                    nombre,
+                    nombres: data.nombres || '',
+                    apellidoPaterno: data.apellidoPaterno || '',
+                    apellidoMaterno: data.apellidoMaterno || ''
+                };
             }
             return null;
         } catch (error) {

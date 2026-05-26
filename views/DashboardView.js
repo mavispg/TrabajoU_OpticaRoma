@@ -40,7 +40,7 @@ export class DashboardView {
             const bg = estado === 'CANCELADO' ? '#27ae60' : '#e67e22';
             tr.innerHTML = `
                 <td><strong>${v.codigo_venta}</strong></td>
-                <td>${v.nombre_cliente}</td>
+                <td>${UIHelper.normalizeText(v.nombre_cliente)}</td>
                 <td>${UIHelper.formatCurrency(v.monto_total)}</td>
                 <td><span class="status-badge" style="font-size:10px; padding:2px 8px; background:${bg}; color:white; border-radius:10px;">${estado}</span></td>
             `;

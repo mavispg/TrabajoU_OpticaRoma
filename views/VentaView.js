@@ -124,6 +124,7 @@ export class VentaView {
             const aCuenta = parseFloat(v.a_cuenta) || 0;
             const saldo = parseFloat(v.saldo) || 0;
             const total = parseFloat(v.monto_total) || 0;
+            const nombreCliente = UIHelper.normalizeText(v.nombre_cliente || 'N/A');
             const estado = v.estado || (saldo === 0 ? 'CANCELADO' : 'PENDIENTE');
             const estadoColor = estado === 'CANCELADO' ? '#27ae60' : (estado === 'ANULADO' ? '#e74c3c' : '#e67e22');
             const estadoEntrega = v.estado_entrega || 'EN PROCESO';
@@ -137,7 +138,7 @@ export class VentaView {
                 ? `<button class="icon-btn motivo-anulacion-btn" title="Ver motivo de anulacion" data-motivo="${this.escapeHtml(motivoAnulacion)}" style="color:#e67e22;margin-left:4px;"><i class='bx bx-error-circle' style="font-size:18px;"></i></button>`
                 : '';
             const canAdminEdit = role === 'admin' && !anulado && !entregado && !entregaLista;
-            const canAdminAnular = role === 'admin' && !anulado;
+            const canAnular = !anulado;
 
             const abonoBtn = (!anulado && !entregado && saldo > 0)
                 ? `<button class="icon-btn abono-btn" title="Registrar Abono" style="color: #27ae60;"><i class='bx bx-dollar-circle' style="font-size: 18px;"></i></button>`
@@ -159,7 +160,7 @@ export class VentaView {
             const deleteBtn = canAdminEdit && estado === 'PENDIENTE'
                 ? `<button class="icon-btn delete-btn" title="Eliminar Venta"><i class='bx bxs-trash'></i></button>`
                 : '';
-            const anularBtn = canAdminAnular
+            const anularBtn = canAnular
                 ? `<button class="icon-btn anular-btn" title="Anular Venta" style="color: #e74c3c;"><i class='bx bx-block' style="font-size: 18px;"></i></button>`
                 : '';
             const pagosBtn = `<button class="icon-btn pagos-history-btn" title="Historial de Pagos" style="color: #34495e;"><i class='bx bx-receipt' style="font-size: 18px;"></i></button>`;
@@ -175,12 +176,12 @@ export class VentaView {
                         ${deleteBtn}
                         ${anularBtn}
                    </div>`
-                : `<div class="actions-wrapper">${abonoBtn}${listoEntregaBtn}${entregadoBtn}${pagosBtn}${printBtn}</div>`;
+                : `<div class="actions-wrapper">${abonoBtn}${listoEntregaBtn}${entregadoBtn}${pagosBtn}${printBtn}${anularBtn}</div>`;
 
             newRow.innerHTML = `
                 <td><strong>${v.codigo_venta}</strong></td>
                 <td>
-                    ${v.nombre_cliente || 'N/A'}<br>
+                    ${nombreCliente}<br>
                     <small style="color:#777;">DNI: ${dniMasked}</small>
                 </td>
                 <td style="padding: 12px 8px;">${formattedDatos || 'N/A'}</td>
@@ -965,11 +966,11 @@ export class VentaView {
         // 🏢 DATOS DE LA EMPRESA (Edítalos aquí cuando quieras cambiar los datos)
         // =======================================================
         const empresa_nombre = "OPTICA ROMA S.A.C.";
-        const empresa_ruc = "20601234567";
-        const empresa_direccion = "AV. COLONIAL 1420 - LIMA";
-        const empresa_telefono = "987 654 321";
+        const empresa_ruc = "10199234132";
+        const empresa_direccion = "Ca. Real 686, Huancayo 12001";
+        const empresa_telefono = "964 853 030";
         const empresa_email = "ventas@opticaroma.com";
-        const empresa_web = "www.opticaroma.com";
+      
         // =======================================================
 
         const isBoleta = type === 'BOLETA';
@@ -982,7 +983,7 @@ export class VentaView {
             
         const clientNameLabel = isBoleta ? 'CLIENTE' : 'RAZON SOCIAL';
         const clientNameVal = isBoleta
-            ? (venta.nombre_cliente || 'CLIENTE GENERAL')
+            ? UIHelper.normalizeText(venta.nombre_cliente || 'CLIENTE GENERAL')
             : (extraData.razonSocial || 'EMPRESA DEMO S.A.C.');
 
         const totalVal = parseFloat(venta.monto_total) || 0;
@@ -1024,7 +1025,7 @@ export class VentaView {
                 <div style="font-size: 11px;">${empresa_direccion}</div>
                 <div style="font-size: 11px;">Telf: ${empresa_telefono}</div>
                 <div style="font-size: 11px;">Email: ${empresa_email}</div>
-                <div style="font-size: 11px;">Web: ${empresa_web}</div>
+                
             </div>
 
             <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 8px 0; margin-bottom: 10px; text-align: center; font-weight: bold;">
@@ -1077,7 +1078,6 @@ export class VentaView {
                 </div>
                 <div style="font-size: 9px; color: #555; margin-top: 6px; line-height: 1.2;">
                     Representacion Impresa de la ${isBoleta ? 'BOLETA' : 'FACTURA'} DE VENTA ELECTRONICA<br>
-                    Puede consultar en: ${empresa_web}<br>
                     Autorizado mediante Resolucion Nro. 034-005-0007241
                 </div>
             </div>

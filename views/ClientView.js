@@ -51,7 +51,7 @@ export class ClientView {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><strong>${c.dni || 'N/A'}</strong></td>
-                <td>${c.nombre}</td>
+                <td>${UIHelper.normalizeText(c.nombre)}</td>
                 <td>${c.celular}</td>
                 <td style="text-align: right;">
                     <button class="btn-proforma" data-id="${c.id}" data-name="${c.nombre}" data-phone="${c.celular}" title="Enviar Cotizacion" style="background: #27ae60; color: #fff; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px;">
